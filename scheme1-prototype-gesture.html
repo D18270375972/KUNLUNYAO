@@ -1063,20 +1063,9 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
     </div>
   </div>
   <div id="gestureGuide">
-    <div class="gg-title">地图上</div>
-    <div class="gg-item"><span class="gg-icon">✋</span><b>张开</b> = 前往下一站</div>
-    <div class="gg-item"><span class="gg-icon">👉</span><b>指向</b> = 查看下一站信息</div>
-    <div class="gg-item"><span class="gg-icon">✊</span><b>握拳</b> = 返回上一站</div>
-    <div class="gg-title">场景中（未对话）</div>
-    <div class="gg-item"><span class="gg-icon">👉</span><b>指向</b> = 与 NPC 对话</div>
-    <div class="gg-item"><span class="gg-icon">✊</span><b>握拳</b> = 返回地图</div>
-    <div class="gg-item"><span class="gg-icon">✋</span><b>张开</b> = 对话完毕后前往下一站</div>
-    <div class="gg-title">NPC 说话中</div>
-    <div class="gg-item"><span class="gg-icon">👉</span><b>指向</b> = 跳过打字动画</div>
-    <div class="gg-title">对话选项中</div>
-    <div class="gg-item"><span class="gg-icon">👉</span><b>指向</b> = 切换选项</div>
-    <div class="gg-item"><span class="gg-icon">✊</span><b>握拳</b> = 确认当前选项</div>
-    <div class="gg-item"><span class="gg-icon">✋</span><b>张开</b> = 手偏左选1·居中选2·偏右选3</div>
+    <div class="gg-title">手势说明</div>
+    <div class="gg-item"><span class="gg-icon">👉</span><b>伸手指</b> = 下一步 / 下一个</div>
+    <div class="gg-item"><span class="gg-icon">✊</span><b>握拳</b> = 确认 / 返回</div>
   </div>
 </div>
 <div class="gesture-action-toast" id="gestureToast"></div>
@@ -3549,19 +3538,22 @@ function _showNpcClickHint(){
 
 // 🧭 地图上的下一步指引（自动根据进度计算）
 function _updateMapGuide(){
-  // 找到下一个未访问的已开放地点
+  var isGesture = gestureActive;
   for(var i=0;i<ROUTE.length;i++){
     var loc=ROUTE[i];
     if(COMING_SOON.has(loc)) continue;
     if(visited.has(loc)) continue;
-    // 找到了！显示指引
     var num=i+1;
     var name=ROUTE_NAMES[loc];
-    if(i===0) setGuide('👆 点击地图上标着 ① 的「'+name+'」开始冒险');
-    else setGuide('👆 下一步：点击「'+name+'」('+num+') 继续旅程 →');
+    if(isGesture){
+      setGuide('👉 伸手指前往「'+name+'」('+num+')');
+    } else if(i===0){
+      setGuide('👆 点击地图上标着 ① 的「'+name+'」开始冒险');
+    } else {
+      setGuide('👆 下一步：点击「'+name+'」('+num+') 继续旅程 →');
+    }
     return;
   }
-  // 所有开放地点都去过了
   setGuide('✨ 已探索完所有开放区域，敬请期待后续章节！');
 }
 
@@ -3695,18 +3687,12 @@ function showChoices(choices,npcId){
   if(isDual)c.classList.add('dual');else c.classList.remove('dual');
   if(gestureActive){
     const hint=document.createElement('div');hint.className='dialog-gesture-hint';hint.id='dialogGestureHint';
-    if(isDual){
-      hint.textContent='🖐 手偏左选壹 · 偏右选贰 · 保持1秒确认';
-    } else if(choices.length<=3){
-      hint.textContent='🖐 手偏左/中/右选壹/贰/叁 · 保持1秒确认';
-    } else {
-      hint.textContent='🖐 举手选择 · 保持1秒确认';
-    }
+    hint.textContent='👉 伸手指切换选项 · ✊ 握拳确认';
     c.appendChild(hint);
   }
   _dialogChoiceBtns=[];
   _dialogGestureIdx=-1;_dialogGestureHold=0;
-  _dlgGestureHist.length=0;_dlgLastGesture='unknown';_dlgSwitchCooldown=0;_dlgLastHandX=-1;
+  _dlgGestureHist.length=0;_dlgLastGesture='unknown';_dlgSwitchCooldown=0;
   const dualLabels=['壹','贰'];
   choices.forEach((ch,i)=>{
     const btn=document.createElement('button');
@@ -3792,9 +3778,9 @@ function selectChoice(choice,npcId){
           gamePhase = GamePhase.SCENE_IDLE;
           markNPCDone(currentLoc);
           const btn=document.getElementById('npcTalkBtn');btn.textContent=NPCS[npcId].name+'（再听一遍）';btn.className='npc-talk-btn quest-done';btn.onclick=()=>startDialog();
-          if(currentLoc==='yaochi'){showQuestNotif('✅ 五色石到手！');setGuide('🗺️ 返回地图 → 点击「玉虚峰」(②) → 找姜子牙拿灵翎')}
-          else if(currentLoc==='yuxu'){showQuestNotif('✅ 灵翎到手！');setGuide('🗺️ 返回地图 → 前往「不周山」(③) 找女娲补天')}
-          else if(currentLoc==='buzhou'){showQuestNotif('✅ 补天完成！');setGuide('🗺️ 返回地图 → 前往「天柱」(④) 完成最终任务')}
+          if(currentLoc==='yaochi'){showQuestNotif('✅ 五色石到手！');setGuide(gestureActive?'✊ 握拳返回地图 → 👉 伸手指去玉虚峰':'🗺️ 返回地图 → 点击「玉虚峰」(②) → 找姜子牙拿灵翎')}
+          else if(currentLoc==='yuxu'){showQuestNotif('✅ 灵翎到手！');setGuide(gestureActive?'✊ 握拳返回地图':'🗺️ 返回地图 → 前往「不周山」(③) 找女娲补天')}
+          else if(currentLoc==='buzhou'){showQuestNotif('✅ 补天完成！');setGuide(gestureActive?'✊ 握拳返回地图':'🗺️ 返回地图 → 前往「天柱」(④) 完成最终任务')}
           // ★ 下一站提示：跳过未开放地点
           setTimeout(()=>{
             var ri=ROUTE.indexOf(currentLoc)+1;
@@ -3996,18 +3982,23 @@ function setGuide(text){
   txt.textContent=text;
 }
 function hideGuide(){document.getElementById('guideBar')?.classList.add('hidden')}
-// 🧭 按当前状态更新指引（对话中显示"选选项"，场景空闲显示"点NPC"，地图上显示下一步）
+// 🧭 按当前状态更新指引（根据手势是否开启显示不同提示）
 function _refreshGuide(){
+  var isGesture = gestureActive; // 手势是否开启
   if(gamePhase===GamePhase.DIALOG_CHOOSING){
-    setGuide('👆 点击对话选项，选择你的回答 →');
+    setGuide(isGesture ? '👉 伸手指切换选项 → ✊ 握拳确认' : '👆 点击对话选项，选择你的回答');
+    return;
+  }
+  if(gamePhase===GamePhase.DIALOG_TYPING){
+    setGuide(isGesture ? '👉 伸手指跳过' : '👆 点击跳过');
     return;
   }
   if(inScene && gamePhase===GamePhase.SCENE_IDLE){
     var npcId=LOC_NPC[currentLoc];
     if(npcId && !isNPCDone(currentLoc)){
-      setGuide('👇 点击下方「'+NPCS[npcId].name+'」头像开始对话');
+      setGuide(isGesture ? '👉 伸手指开始对话 | ✊ 握拳返回地图' : '👇 点击下方「'+NPCS[npcId].name+'」头像开始对话');
     } else {
-      setGuide('🗺️ 点击左上角「返回地图」继续旅程');
+      setGuide(isGesture ? '✊ 握拳返回地图' : '🗺️ 点击左上角「返回地图」继续旅程');
     }
     return;
   }
@@ -4501,7 +4492,7 @@ function _classifyHandGesture(kps){
 }
 
 // ---- 手势动作触发系统（带 hold 计数 + 稳定输出）----
-let _gestureHoldCount = {open:0, fist:0, point:0, ok:0};
+let _gestureHoldCount = {next:0, confirm:0};
 const GESTURE_HOLD_THRESHOLD = 8;   // 连续8帧确认（约133ms@60fps），更快响应同时保持防误触
 let _gestureCooldown = 0;
 const GESTURE_COOLDOWN_FRAMES = 18;  // 触发后冷却18帧（约300ms@60fps），缩短冷却允许更快连发
@@ -4511,9 +4502,22 @@ let _stableFrames = 0;              // 当前稳定手势已保持的帧数
 function _detectHandGestures(kps){
   if(_gestureCooldown > 0){ _gestureCooldown--; return null; }
 
-  const gesture = _classifyHandGesture(kps);
+  var rawGesture = _classifyHandGesture(kps);
 
-  // 更新稳定手势：只有连续一致才切换
+  // ★ 简化手势映射：只保留2种有效手势
+  // 指向(point) + 张开(open) → 统一为 'next'（下一步/切换/翻页）
+  // 握拳(fist) → 'confirm'（确认/返回）
+  // ok/unknown → 忽略
+  var gesture = null;
+  if(rawGesture === 'point' || rawGesture === 'open'){
+    gesture = 'next';
+  } else if(rawGesture === 'fist'){
+    gesture = 'confirm';
+  } else {
+    return null;  // ok/unknown 全部忽略
+  }
+
+  // 更新稳定手势
   if(gesture === _stableGesture){
     _stableFrames++;
   } else {
@@ -4524,30 +4528,22 @@ function _detectHandGestures(kps){
     }
   }
 
-  // hold计数：匹配时+1，不匹配时缓慢衰减
-  _gestureHoldCount.open  = gesture==='open'  ? Math.min(_gestureHoldCount.open+1, GESTURE_HOLD_THRESHOLD+2) : Math.max(0,_gestureHoldCount.open-1);
-  _gestureHoldCount.fist  = gesture==='fist'  ? Math.min(_gestureHoldCount.fist+1, GESTURE_HOLD_THRESHOLD+2) : Math.max(0,_gestureHoldCount.fist-1);
-  _gestureHoldCount.point = gesture==='point' ? Math.min(_gestureHoldCount.point+1, GESTURE_HOLD_THRESHOLD+2) : Math.max(0,_gestureHoldCount.point-1);
-  _gestureHoldCount.ok    = gesture==='ok'    ? Math.min(_gestureHoldCount.ok+1, GESTURE_HOLD_THRESHOLD+2)    : Math.max(0,_gestureHoldCount.ok-1);
+  // hold计数：只跟踪2种简化手势
+  _gestureHoldCount.next    = gesture==='next'    ? Math.min(_gestureHoldCount.next+1, GESTURE_HOLD_THRESHOLD+2)    : Math.max(0,_gestureHoldCount.next-1);
+  _gestureHoldCount.confirm = gesture==='confirm' ? Math.min(_gestureHoldCount.confirm+1, GESTURE_HOLD_THRESHOLD+2) : Math.max(0,_gestureHoldCount.confirm-1);
 
-  if(_gestureHoldCount.open >= GESTURE_HOLD_THRESHOLD){  _gestureHoldCount.open=0;  _gestureCooldown=GESTURE_COOLDOWN_FRAMES; return 'open'; }
-  if(_gestureHoldCount.fist >= GESTURE_HOLD_THRESHOLD){  _gestureHoldCount.fist=0;  _gestureCooldown=GESTURE_COOLDOWN_FRAMES; return 'fist'; }
-  if(_gestureHoldCount.point >= GESTURE_HOLD_THRESHOLD){ _gestureHoldCount.point=0; _gestureCooldown=GESTURE_COOLDOWN_FRAMES; return 'point'; }
-  if(_gestureHoldCount.ok >= GESTURE_HOLD_THRESHOLD){    _gestureHoldCount.ok=0;    _gestureCooldown=GESTURE_COOLDOWN_FRAMES; return 'ok'; }
+  if(_gestureHoldCount.next >= GESTURE_HOLD_THRESHOLD){   _gestureHoldCount.next=0;    _gestureCooldown=GESTURE_COOLDOWN_FRAMES; return 'next'; }
+  if(_gestureHoldCount.confirm >= GESTURE_HOLD_THRESHOLD){ _gestureHoldCount.confirm=0; _gestureCooldown=GESTURE_COOLDOWN_FRAMES; return 'confirm'; }
   return null;
 }
 
-// 手势对话选择：用食指/握拳控制（滑动窗口抗抖动）
-// 对话选项手势：抗闪烁参数
-const _DLG_HIST_LEN = 8;          // 增大滑动窗口（8帧≈267ms）
-const _DLG_MIN_RATIO = 0.55;      // 众数需占窗口55%以上才采纳
-const _DLG_SWITCH_COOLDOWN = 4;   // 切换选项后冷却4帧，防止来回跳
-const _DLG_HYSTERESIS = 0.08;     // 位置迟滞区宽度（±8%）
-let _dlgGestureHist = [];         // 对话手势滑动窗口（独立于命令手势）
-let _dlgLastGesture = 'unknown';  // 上一次稳定的对话手势
-let _dlgSwitchCooldown = 0;       // 选项切换冷却
-let _dlgLastHandX = -1;          // 上一次手腕X坐标（用于迟滞）
-let _dlgLastProcessedSeq = -1;   // 上次处理的MediaPipe序列号（防双帧，renderLoop层使用）
+// 手势对话选择：简化为2种手势
+// 👉 指向 = 切换到下一个选项
+// ✊ 握拳 = 确认当前选项
+let _dlgGestureHist = [];
+let _dlgLastGesture = 'unknown';
+let _dlgSwitchCooldown = 0;
+let _dlgLastProcessedSeq = -1;
 
 function _handleDialogHandGesture(kps){
   if(_dialogChoiceBtns.length === 0){
@@ -4556,29 +4552,29 @@ function _handleDialogHandGesture(kps){
     return;
   }
 
-  const rawGesture = _classifyHandGesture(kps);
+  var rawGesture = _classifyHandGesture(kps);
+  var gesture = 'unknown';
+  if(rawGesture === 'point' || rawGesture === 'open') gesture = 'next';
+  else if(rawGesture === 'fist') gesture = 'confirm';
+
   const len = _dialogChoiceBtns.length;
 
-  // ---- 滑动窗口（独立窗口，更长历史） ----
-  _dlgGestureHist.push(rawGesture);
+  // 滑动窗口
+  _dlgGestureHist.push(gesture);
   if(_dlgGestureHist.length > _DLG_HIST_LEN) _dlgGestureHist.shift();
 
-  const counts = {};
-  for(const g of _dlgGestureHist){ counts[g] = (counts[g]||0) + 1; }
-  let bestGesture = _dlgLastGesture;
-  let bestCount = 0;
-  for(const [g,c] of Object.entries(counts)){
-    if(c > bestCount){ bestCount=c; bestGesture=g; }
-  }
-  // ★ 众数必须达到55%才切换手势，否则保持上次稳定手势
-  const gesture = bestCount >= Math.ceil(_DLG_HIST_LEN * _DLG_MIN_RATIO) ? bestGesture : _dlgLastGesture;
-  _dlgLastGesture = gesture;
+  var counts = {};
+  for(var gi=0;gi<_dlgGestureHist.length;gi++){ counts[_dlgGestureHist[gi]] = (counts[_dlgGestureHist[gi]]||0) + 1; }
+  var bestGesture = _dlgLastGesture;
+  var bestCount = 0;
+  for(var gk in counts){ if(counts[gk] > bestCount){ bestCount=counts[gk]; bestGesture=gk; } }
+  var stableGesture = bestCount >= Math.ceil(_DLG_HIST_LEN * _DLG_MIN_RATIO) ? bestGesture : _dlgLastGesture;
+  _dlgLastGesture = stableGesture;
 
-  // ★ 切换冷却：刚切换选项后短时间内不接受新的切换
   if(_dlgSwitchCooldown > 0) _dlgSwitchCooldown--;
 
-  // ---- 食指朝上 = 高亮下一个选项 ----
-  if(gesture === 'point'){
+  // 👉 指向 = 切换到下一个选项
+  if(stableGesture === 'next'){
     _dialogGestureHold++;
     if(_dialogGestureHold >= DIALOG_GESTURE_HOLD){
       if(_dlgSwitchCooldown <= 0){
@@ -4589,13 +4585,12 @@ function _handleDialogHandGesture(kps){
       _dialogGestureHold = 0;
     }
   }
-  // ---- 握拳 = 确认当前选项 ----
-  else if(gesture === 'fist' && _dialogGestureIdx >= 0){
-    // ★ 只在fist持续期间计数，切换手势类型时hold已重置
+  // ✊ 握拳 = 确认当前选项
+  else if(stableGesture === 'confirm' && _dialogGestureIdx >= 0){
     _dialogGestureHold++;
-    const progress = _dialogGestureHold / DIALOG_GESTURE_HOLD;
-    _dialogChoiceBtns.forEach((item, i) => {
-      const shouldConfirm = (i === _dialogGestureIdx && progress >= 0.6);
+    var progress = _dialogGestureHold / DIALOG_GESTURE_HOLD;
+    _dialogChoiceBtns.forEach(function(item, i){
+      var shouldConfirm = (i === _dialogGestureIdx && progress >= 0.6);
       if(shouldConfirm !== item.btn.classList.contains('gesture-confirm')){
         item.btn.classList.toggle('gesture-confirm', shouldConfirm);
       }
@@ -4604,52 +4599,7 @@ function _handleDialogHandGesture(kps){
       _confirmDialogChoice(_dialogGestureIdx);
     }
   }
-  // ---- 张开手掌 = 通过位置选择（带迟滞区） ----
-  // ★ 视频已镜像(flipHorizontal)：画面左侧的手实际 x 值大，右侧 x 值小
-  // 所以 handX 大 → 画面左侧 → 选壹(选项0)，handX 小 → 画面右侧 → 选贰(选项1)
-  else if(gesture === 'open' && len <= 3){
-    const handX = kps[0].x;
-    let selectedIdx = -1;
-
-    if(len === 1){
-      selectedIdx = 0;
-    } else if(len === 2){
-      // ★ 镜像修正：handX大=画面左=选项0(壹)，handX小=画面右=选项1(贰)
-      const LO = 0.42, HI = 0.58;
-      if(handX > HI) selectedIdx = 0;       // 画面左侧 → 壹
-      else if(handX < LO) selectedIdx = 1;   // 画面右侧 → 贰
-      else if(_dialogGestureIdx === 0) selectedIdx = 0;  // 迟滞区保持上次
-      else if(_dialogGestureIdx === 1) selectedIdx = 1;
-      else selectedIdx = handX > 0.5 ? 0 : 1;  // 无历史时用中间值（镜像修正）
-    } else if(len === 3){
-      const zones = [0.28, 0.72]; // 迟滞区分界线（镜像后）
-      if(handX > zones[1]) selectedIdx = 0;       // 最左 → 第1个
-      else if(handX < zones[0]) selectedIdx = 2;   // 最右 → 第3个
-      else{
-        // 中间区
-        if(handX > 0.58) selectedIdx = (_dialogGestureIdx === 0) ? 0 : 1;
-        else if(handX < 0.42) selectedIdx = (_dialogGestureIdx === 2) ? 2 : 1;
-        else selectedIdx = 1; // 正中间
-      }
-    }
-
-    if(selectedIdx >= 0 && _dlgSwitchCooldown <= 0){
-      if(selectedIdx === _dialogGestureIdx){
-        _dialogGestureHold++;
-        const progress = _dialogGestureHold / DIALOG_GESTURE_HOLD;
-        _updateDialogBtnConfirm(progress);
-        if(_dialogGestureHold >= DIALOG_GESTURE_HOLD){
-          _confirmDialogChoice(selectedIdx);
-        }
-      } else {
-        _dialogGestureIdx = selectedIdx;
-        _dialogGestureHold = 0;
-        _dlgSwitchCooldown = _DLG_SWITCH_COOLDOWN;
-        _updateDialogBtnVisuals();
-      }
-    }
-  }
-  // ---- 其他手势 / 无手势：缓慢衰减 ----
+  // 其他手势：缓慢衰减
   else {
     if(_dialogGestureHold > 0){
       _dialogGestureHold = Math.max(0, _dialogGestureHold - 1);
@@ -4690,176 +4640,88 @@ function _updateDialogBtnConfirm(progress){
 function _executeHandGestureAction(gesture){
   _gestureCooldown = GESTURE_COOLDOWN_FRAMES;
 
-  // ===== 结局画卷展示中：握拳/张开关闭画卷 =====
+  // ===== 结局画卷：握拳关闭 =====
   if(_endingActive){
-    if(gesture === 'fist' || gesture === 'open'){
-      _showGestureToast(gesture === 'fist' ? '✊ 闭合画卷' : '✋ 闭合画卷');
+    if(gesture === 'confirm'){
+      _showGestureToast('✊ 关闭画卷');
       closeEndingScroll();
     }
-    return;  // 结局画卷打开时，屏蔽其他手势
-  }
-
-  // ===== 根据游戏阶段决定手势行为 =====
-
-  if(gamePhase === GamePhase.DIALOG_TYPING){
-    // 对话打字中：只有指向可跳过动画
-    if(gesture === 'point'){
-      _skipCurrentTyping();
-      _showGestureToast('👉 跳过');
-    }
-    return;  // 其他手势全部忽略
-  }
-
-  if(gamePhase === GamePhase.DIALOG_CHOOSING){
-    // 对话选择中：命令手势不响应（由 _handleDialogHandGesture 处理）
     return;
   }
 
+  // ===== 对话打字中：指向=跳过 =====
+  if(gamePhase === GamePhase.DIALOG_TYPING){
+    if(gesture === 'next'){
+      _skipCurrentTyping();
+      _showGestureToast('👉 跳过');
+    }
+    return;
+  }
+
+  // ===== 对话选择中：由 _handleDialogHandGesture 处理 =====
+  if(gamePhase === GamePhase.DIALOG_CHOOSING){
+    return;
+  }
+
+  // ===== 地图上 =====
   if(gamePhase === GamePhase.MAP){
-    // ★ 诗词卷轴打开时：指向翻页，握拳/张开关闭卷轴
+    // 诗词卷轴打开时
     var _poemOverlayMap = document.getElementById('poetryScrollOverlay');
     if(_poemOverlayMap && _poemOverlayMap.classList.contains('show')){
-      if(gesture === 'point' && PV2.waitingFlip){
-        _showGestureToast('👆 翻页');
+      if(gesture === 'next' && PV2.waitingFlip){
+        _showGestureToast('👉 翻页');
         _pv2FlipPage();
-      } else if(gesture === 'fist' || gesture === 'open'){
-        _showGestureToast(gesture === 'fist' ? '✊ 关闭' : '✋ 关闭');
+      } else if(gesture === 'confirm'){
+        _showGestureToast('✊ 关闭');
         closePoemScroll();
       }
       return;
     }
-    // 地图上：张开→前往下一站，指向→前往最近点
-    if(gesture === 'open'){
-      // 检查是否有已访问但未完成对话的地点
-      var unfinishedLoc = null;
-      for(var vi=0; vi<ROUTE.length; vi++){
-        var vk = ROUTE[vi];
-        if(!COMING_SOON.has(vk) && visited.has(vk) && !isNPCDone(vk)){ unfinishedLoc = vk; break; }
-      }
-      if(unfinishedLoc){
-        var ufNpcId = LOC_NPC[unfinishedLoc];
-        _showGestureToast('✋ 请先与 ' + (ufNpcId ? NPCS[ufNpcId].name : ROUTE_NAMES[unfinishedLoc]) + ' 对话');
-        return;
-      }
-      // 按路线顺序找下一个未访问且已开放的地点
+    // 指向=前往下一站
+    if(gesture === 'next'){
       var nextKey = null;
       for(var ri=0; ri<ROUTE.length; ri++){
         if(!COMING_SOON.has(ROUTE[ri]) && !visited.has(ROUTE[ri])){ nextKey = ROUTE[ri]; break; }
       }
       if(nextKey){
-        _showGestureToast('✋ 前往 ' + ROUTE_NAMES[nextKey]);
+        _showGestureToast('👉 前往 ' + ROUTE_NAMES[nextKey]);
         openLocation(nextKey);
       } else {
-        _showGestureToast('✋ 已完成全部开放路线');
+        _showGestureToast('👉 已完成全部路线');
       }
     }
-    else if(gesture === 'point'){
-      // 指向→前往最近点（基于玩家在地图上的位置）
-      var nearestLoc = _findNearestLocation(30); // 30%距离阈值
-      if(nearestLoc){
-        var npcIdP = LOC_NPC[nearestLoc];
-        var info = '👉 前往 ' + ROUTE_NAMES[nearestLoc];
-        if(npcIdP) info += '（' + NPCS[npcIdP].name + '）';
-        _showGestureToast(info);
-        openLocation(nearestLoc);
-      } else {
-        // 没有足够近的地点，退回显示下一站信息
-        var nextKey2 = null;
-        for(var ri2=0; ri2<ROUTE.length; ri2++){
-          if(!COMING_SOON.has(ROUTE[ri2]) && !visited.has(ROUTE[ri2])){ nextKey2 = ROUTE[ri2]; break; }
-        }
-        if(nextKey2){
-          var npcId2 = LOC_NPC[nextKey2];
-          var info2 = '👉 下一站：' + ROUTE_NAMES[nextKey2];
-          if(npcId2) info2 += '（' + NPCS[npcId2].name + '）';
-          _showGestureToast(info2 + '（走近后再指向）');
-        } else {
-          _showGestureToast('👉 已完成全部开放路线');
-        }
-      }
-    }
-    else if(gesture === 'fist'){
-      // 握拳→返回上一个已访问地点（跳过未开放地点）
-      var lastVisited = null;
-      for(var fi=ROUTE.length-1; fi>=0; fi--){
-        if(!COMING_SOON.has(ROUTE[fi]) && visited.has(ROUTE[fi]) && !isNPCDone(ROUTE[fi])){ lastVisited = ROUTE[fi]; break; }
-      }
-      if(lastVisited){
-        var lnpcId = LOC_NPC[lastVisited];
-        _showGestureToast('✋ 返回 ' + ROUTE_NAMES[lastVisited] + '（与' + (lnpcId?NPCS[lnpcId].name:'NPC') + '对话）');
-        openLocation(lastVisited);
-      } else {
-        // 所有地点都已完成或未访问，找最后一个已访问的（跳过未开放）
-        for(var fi2=ROUTE.length-1; fi2>=0; fi2--){
-          if(!COMING_SOON.has(ROUTE[fi2]) && visited.has(ROUTE[fi2])){ lastVisited = ROUTE[fi2]; break; }
-        }
-        if(lastVisited){
-          _showGestureToast('✊ 返回 ' + ROUTE_NAMES[lastVisited]);
-          openLocation(lastVisited);
-        } else {
-          _showGestureToast('✊ 尚未访问任何地点');
-        }
-      }
-    }
+    // 握拳=无操作（地图上没地方返回）
     return;
   }
 
+  // ===== 场景中（未对话） =====
   if(gamePhase === GamePhase.SCENE_IDLE){
-    // ★ 诗词卷轴打开时：指向翻页，握拳返回地图，张开关闭卷轴
+    // 诗词卷轴打开时
     var _poemOverlay = document.getElementById('poetryScrollOverlay');
     if(_poemOverlay && _poemOverlay.classList.contains('show')){
-      if(gesture === 'point' && PV2.waitingFlip){
-        _showGestureToast('👆 翻页');
+      if(gesture === 'next' && PV2.waitingFlip){
+        _showGestureToast('👉 翻页');
         _pv2FlipPage();
-      } else if(gesture === 'fist'){
-        _showGestureToast('✊ 返回地图');
-        closePoemScroll();
-        backToMap();
-      } else if(gesture === 'open'){
-        _showGestureToast('✋ 关闭卷轴');
+      } else if(gesture === 'confirm'){
+        _showGestureToast('✊ 关闭');
         closePoemScroll();
       }
-      return;  // 卷轴打开时，屏蔽其他场景手势
+      return;
     }
-    // 场景中（未对话）：
-    // 指向→开始对话，握拳→返回地图，张开→前往下一站（对话完成后）
-    if(gesture === 'point'){
+    // 指向=开始对话
+    if(gesture === 'next'){
       if(currentLoc){
         var npcId = LOC_NPC[currentLoc];
         if(npcId){
-          if(!isNPCDone(currentLoc)){
-            _showGestureToast('👉 与 ' + NPCS[npcId].name + ' 对话');
-            setTimeout(function(){ startDialog(); }, 300);
-          } else {
-            _showGestureToast('👉 再听 ' + NPCS[npcId].name + ' 说一遍');
-            setTimeout(function(){ startDialog(); }, 300);
-          }
+          _showGestureToast('👉 与 ' + NPCS[npcId].name + ' 对话');
+          setTimeout(function(){ startDialog(); }, 300);
         }
       }
     }
-    else if(gesture === 'fist'){
+    // 握拳=返回地图
+    else if(gesture === 'confirm'){
       _showGestureToast('✊ 返回地图');
       backToMap();
-    }
-    else if(gesture === 'open'){
-      // 对话已完成→前往下一站（跳过未开放地点）
-      if(currentLoc && isNPCDone(currentLoc)){
-        var nextIdx = ROUTE.indexOf(currentLoc) + 1;
-        var nextKey = null;
-        while(nextIdx < ROUTE.length){
-          if(!COMING_SOON.has(ROUTE[nextIdx])){ nextKey = ROUTE[nextIdx]; break; }
-          nextIdx++;
-        }
-        if(nextKey){
-          _showGestureToast('✋ 前往 ' + ROUTE_NAMES[nextKey]);
-          backToMap();
-          setTimeout(function(){ openLocation(nextKey); }, 1200);
-        } else {
-          _showGestureToast('✋ 已完成全部开放路线');
-        }
-      } else {
-        _showGestureToast('✋ 请先与 NPC 对话');
-      }
     }
     return;
   }
@@ -4920,10 +4782,11 @@ async function toggleGesture(){
     if(_tfVideoStream){_tfVideoStream.getTracks().forEach(t=>t.stop());_tfVideoStream=null;}
     if(_handsDetector){try{_handsDetector.close();}catch(e){}}_handsDetector=null;
     _smoothHandX = 0.5; _smoothHandY = 0.5; _lastPoseTime = 0;
-    _gestureHoldCount = {open:0, fist:0, point:0, ok:0};
+    _gestureHoldCount = {next:0, confirm:0};
     const btn=document.getElementById('btnGesture');
     if(btn){btn.textContent='✋ 开启手势导航';btn.classList.remove('active');}
     setModeBadge('keyboard');
+    _refreshGuide(); // ★ 切换模式后刷新指引
     setGestureDebug('⌨ WASD / 方向键移动角色');
     const mc=document.getElementById('mpCanvas');
     if(mc){mc.getContext('2d').clearRect(0,0,mc.width,mc.height);}
@@ -5093,6 +4956,7 @@ async function toggleGesture(){
     _handsDetector = hands;
     if(btn){btn.textContent='⏹ 停止手势导航';btn.disabled=false;btn.classList.add('active');}
     setModeBadge('camera');
+    _refreshGuide(); // ★ 切换模式后刷新指引
     var guide = document.getElementById('gestureGuide');
     if(guide) guide.classList.add('show');
 
@@ -5162,7 +5026,7 @@ async function toggleGesture(){
 
         var gesture = _classifyHandGesture(kps);
         _lastGesture = gesture;
-        var gestureLabels = {open:'✋张开', fist:'✊握拳', point:'👉指向', ok:'👍OK', unknown:'...'};
+        var gestureLabels = {next:'👉下一步', confirm:'✊确认', open:'👉下一步', fist:'✊确认', point:'👉下一步', ok:'...', unknown:'...'};
         // 手势标签 - 显示稳定手势，不闪烁
         mpCtx.save();
         mpCtx.fillStyle = 'rgba(0,0,0,0.55)';
