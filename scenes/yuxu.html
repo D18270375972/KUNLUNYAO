@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>玉虚峰 · 昆仑谣</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #F0E4CE; }
+    canvas { display: block; cursor: crosshair; width: 100%; height: 100%; }
+    /* NPC 对话提示 */
+    .npc-dialog-hint {
+      position: absolute; bottom: 14%; left: 50%; transform: translateX(-50%);
+      z-index: 20; pointer-events: none;
+      padding: 6px 18px; border-radius: 999px;
+      background: rgba(74,63,50,0.75); color: #E8CC8A;
+      font-size: 13px; letter-spacing: 0.18em;
+      border: 1px solid rgba(212,168,83,0.3);
+      backdrop-filter: blur(4px);
+      opacity: 0; animation: npcHintFade 6s ease-in-out 1.5s forwards;
+      font-family: "STKaiti", "KaiTi", "楷体", "FangSong", "仿宋", serif;
+    }
+    @keyframes npcHintFade {
+      0% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+      15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      75% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+(function(){
+  // ======================== 配色体系 ========================
+  const PALETTE = {
+    parchment:  '#F0E4CE',
+    inkDark:    '#2B2417',
+    inkMid:     '#4A3F32',
+    inkLight:   '#6B5E4F',
+    snowWhite:  '#EDE8DE',
+    snowPeak:   '#F5F0EB',
+    ochre:      '#9B7653',
+    ochreLight: '#B8956E',
+    cyanGray:   '#8B9DA8',
+    cyanLight:  '#A8B8C0',
+    mistGray:   '#D4CEC3',
+    mistLight:  '#E2DDD5',
+    sunsetGold: '#CB7D52',
+    sunsetWarm: '#D49060',
+    ridgeLine:  '#3A3024',
+  };
+
+  // ======================== 昆仑山体层级定义 ========================
+  const MOUNTAIN_LAYERS = [
+    {
+      name: '远山·层四', baseY: 0.36,
+      waves: [
+        { amp: 65, freq: 2.5, phase: 0.3 },
+        { amp: 28, freq: 4.8, phase: 1.1 },
+        { amp: 14, freq: 7.2, phase: 2.5 },
+        { amp: 8,  freq: 10.5, phase: 0.9 },
+      ],
+      bodyColor: PALETTE.cyanGray, ridgeColor: PALETTE.inkLight, snowColor: PALETTE.snowWhite,
+      opacity: 0.28, parallax: 8, lineWidth: 0.8, snowHeight: 35, ridgeDetail: 0,
+    },
+    {
+      name: '中景·层三', baseY: 0.50,
+      waves: [
+        { amp: 95, freq: 1.9, phase: 1.7 },
+        { amp: 42, freq: 4.2, phase: 0.2 },
+        { amp: 20, freq: 6.5, phase: 2.0 },
+        { amp: 10, freq: 9.0, phase: 1.3 },
+      ],
+      bodyColor: PALETTE.cyanLight, ridgeColor: PALETTE.inkMid, snowColor: PALETTE.snowPeak,
+      opacity: 0.45, parallax: 14, lineWidth: 1.0, snowHeight: 50, ridgeDetail: 0,
+    },
+    {
+      name: '近景·层二', baseY: 0.63,
+      waves: [
+        { amp: 130, freq: 1.45, phase: 0.9 },
+        { amp: 55, freq: 3.3, phase: 1.5 },
+        { amp: 25, freq: 5.5, phase: 0.4 },
+        { amp: 12, freq: 8.0, phase: 2.1 },
+      ],
+      bodyColor: PALETTE.ochre, ridgeColor: PALETTE.inkDark, snowColor: PALETTE.snowWhite,
+      opacity: 0.65, parallax: 22, lineWidth: 1.3, snowHeight: 65, ridgeDetail: 0,
+    },
+    {
+      name: '前景·层一', baseY: 0.77,
+      waves: [
+        { amp: 170, freq: 0.92, phase: 2.3 },
+        { amp: 65,  freq: 2.4, phase: 0.6 },
+        { amp: 30,  freq: 4.2, phase: 1.8 },
+        { amp: 12,  freq: 6.8, phase: 0.3 },
+      ],
+      bodyColor: PALETTE.inkDark, ridgeColor: PALETTE.inkDark, snowColor: PALETTE.snowPeak,
+      opacity: 0.38, parallax: 32, lineWidth: 1.6, snowHeight: 70, ridgeDetail: 0,
+    },
+  ];
+
+  const SNOW_COUNT = 120;
+  const TRAIL_MAX = 120;
+  const TRAIL_LIFETIME = 2.0;
+  const RIPPLE_LIFETIME = 2.8;
+
+  // ======================== ★ 新增：飞鸟系统 ========================
+  const BIRD_COUNT = 7;
+  var birds = [];
+
+  function initBirds() {
+    birds = [];
+    for (var i = 0; i < BIRD_COUNT; i++) {
+      birds.push(createBird(true));
+    }
+  }
+
+  function createBird(randomX) {
+    // 鸟在不同层：0=远山(层四), 1=中景(层三), 2=近景(层二)
+    var layerIdx = Math.floor(Math.random() * 3);
+    var layer = MOUNTAIN_LAYERS[layerIdx];
+    var size = 4 + layerIdx * 3 + Math.random() * 4; // 远小近大
+    var speed = 0.3 + layerIdx * 0.2 + Math.random() * 0.3;
+    var yBase = layer.baseY;
+    // 鸟的Y在山脊上方一点
+    var yOff = -25 - Math.random() * 100;
+    return {
+      x: randomX ? Math.random() * W : (Math.random() > 0.5 ? -40 : W + 40),
+      baseY: yBase,
+      yOffset: yOff,
+      size: size,
+      speed: speed * (Math.random() > 0.5 ? 1 : -1),
+      layerIdx: layerIdx,
+      parallax: layer.parallax,
+      wingPhase: Math.random() * Math.PI * 2,
+      wingSpeed: 0.07 + Math.random() * 0.07,
+      bobPhase: Math.random() * Math.PI * 2,
+      bobAmp: 3 + Math.random() * 5,
+      opacity: 0.40 + layerIdx * 0.18,
+      // 鸟群：部分鸟有同伴
+      hasFollower: Math.random() > 0.6,
+      followerOffX: 12 + Math.random() * 20,
+      followerOffY: 4 + Math.random() * 8,
+    };
+  }
+
+  function updateAndDrawBirds(ctx, w, h, time, parallaxBaseX) {
+    for (var i = 0; i < birds.length; i++) {
+      var b = birds[i];
+      // 移动
+      b.x += b.speed;
+      b.wingPhase += b.wingSpeed;
+      b.bobPhase += 0.02;
+
+      // 视差偏移
+      var offX = parallaxBaseX * b.parallax;
+      var drawX = b.x + offX;
+      var bobY = Math.sin(b.bobPhase) * b.bobAmp;
+      // 计算鸟在山脊上的Y位置
+      var mountainY = b.baseY * h + getMountainY(b.x, w, MOUNTAIN_LAYERS[b.layerIdx], time * 0.0009);
+      var drawY = mountainY + b.yOffset + bobY;
+
+      // 超出边界则重置
+      if (b.speed > 0 && b.x > w + 60) {
+        birds[i] = createBird(false);
+        birds[i].x = -40;
+        birds[i].speed = Math.abs(birds[i].speed);
+      } else if (b.speed < 0 && b.x < -60) {
+        birds[i] = createBird(false);
+        birds[i].x = w + 40;
+        birds[i].speed = -Math.abs(birds[i].speed);
+      }
+
+      // 绘制飞鸟（仙鹤风格简笔）
+      var s = b.size;
+      var wingY = Math.sin(b.wingPhase) * s * 0.8;
+      ctx.save();
+      ctx.globalAlpha = b.opacity;
+      ctx.strokeStyle = b.layerIdx === 0 ? '#8B9DA8' : (b.layerIdx === 1 ? '#6B5E4F' : '#4A3F32');
+      ctx.lineWidth = Math.max(1, s * 0.25);
+      ctx.lineCap = 'round';
+
+      // 身体
+      ctx.beginPath();
+      ctx.moveTo(drawX - s * 1.2, drawY);
+      ctx.quadraticCurveTo(drawX, drawY - s * 0.3, drawX + s * 1.2, drawY);
+      ctx.stroke();
+
+      // 左翼
+      ctx.beginPath();
+      ctx.moveTo(drawX - s * 0.3, drawY - s * 0.1);
+      ctx.quadraticCurveTo(drawX - s * 1.5, drawY - wingY - s * 0.5, drawX - s * 2.2, drawY - wingY);
+      ctx.stroke();
+
+      // 右翼
+      ctx.beginPath();
+      ctx.moveTo(drawX + s * 0.3, drawY - s * 0.1);
+      ctx.quadraticCurveTo(drawX + s * 1.5, drawY - wingY - s * 0.5, drawX + s * 2.2, drawY - wingY);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  }
+
+  // ======================== ★ 新增：飘动云朵系统 ========================
+  var clouds = [];
+  var CLOUD_COUNT = 6;
+
+  function initClouds() {
+    clouds = [];
+    for (var i = 0; i < CLOUD_COUNT; i++) {
+      clouds.push(createCloud(true));
+    }
+  }
+
+  function createCloud(randomX) {
+    // 云分布在各山层之间
+    var layerIdx = Math.floor(Math.random() * 4);
+    var layer = MOUNTAIN_LAYERS[layerIdx];
+    var baseY = layer.baseY;
+    // 云在山脊上方或覆盖山脊
+    var isLargeCloud = Math.random() > 0.55;
+    var yOffset = isLargeCloud ? (-10 - Math.random() * 40) : (-20 - Math.random() * 70);
+    var cw = isLargeCloud ? (140 + Math.random() * 220) : (70 + Math.random() * 130);
+    var ch = isLargeCloud ? (30 + Math.random() * 50) : (18 + Math.random() * 30);
+    // 靠近太阳方向的云有暖色
+    var isWarm = Math.random() > 0.45;
+    return {
+      x: randomX ? Math.random() * W * 1.4 - W * 0.2 : (Math.random() > 0.5 ? -300 : W + 300),
+      baseY: baseY,
+      yOffset: yOffset,
+      width: cw,
+      height: ch,
+      speed: 0.06 + Math.random() * 0.22,
+      parallax: layer.parallax,
+      layerIdx: layerIdx,
+      opacity: isLargeCloud ? (0.12 + Math.random() * 0.18) : (0.08 + Math.random() * 0.16),
+      driftPhase: Math.random() * Math.PI * 2,
+      driftAmp: 4 + Math.random() * 14,
+      isWarm: isWarm,
+      isLarge: isLargeCloud,
+      // 云的形状参数：几团椭圆组合
+      blobs: generateCloudBlobs(isLargeCloud),
+    };
+  }
+
+  function generateCloudBlobs(isLarge) {
+    var count = isLarge ? (4 + Math.floor(Math.random() * 4)) : (3 + Math.floor(Math.random() * 3));
+    var blobs = [];
+    for (var i = 0; i < count; i++) {
+      blobs.push({
+        xOff: (i - count/2) * 0.28 + (Math.random() - 0.5) * 0.18,
+        yOff: (Math.random() - 0.5) * 0.45,
+        rxScale: 0.45 + Math.random() * 0.65,
+        ryScale: 0.55 + Math.random() * 0.55,
+      });
+    }
+    return blobs;
+  }
+
+  function updateAndDrawClouds(ctx, w, h, time, parallaxBaseX, timePhase) {
+    for (var i = 0; i < clouds.length; i++) {
+      var c = clouds[i];
+      c.x += c.speed;
+      c.driftPhase += 0.003;
+
+      // 视差偏移
+      var offX = parallaxBaseX * c.parallax;
+      var drawX = c.x + offX;
+      var driftY = Math.sin(c.driftPhase) * c.driftAmp;
+      var mountainY = c.baseY * h + getMountainY(c.x, w, MOUNTAIN_LAYERS[c.layerIdx], timePhase);
+      var drawY = mountainY + c.yOffset + driftY;
+
+      // 超出边界则重置
+      if (c.x > w + 250) {
+        clouds[i] = createCloud(false);
+        clouds[i].x = -250;
+      } else if (c.x < -250) {
+        clouds[i] = createCloud(false);
+        clouds[i].x = w + 250;
+        clouds[i].speed = -Math.abs(clouds[i].speed);
+      }
+
+      // 绘制云朵（多团椭圆组合）
+      ctx.save();
+      ctx.globalAlpha = c.opacity;
+      ctx.fillStyle = PALETTE.mistLight;
+
+      for (var j = 0; j < c.blobs.length; j++) {
+        var bl = c.blobs[j];
+        var bx = drawX + bl.xOff * c.width;
+        var by = drawY + bl.yOff * c.height;
+        var brx = c.width * 0.35 * bl.rxScale;
+        var bry = c.height * 0.5 * bl.ryScale;
+        ctx.beginPath();
+        ctx.ellipse(bx, by, Math.max(5, brx), Math.max(3, bry), 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // ======================== ★ 新增：萤火虫 / 浮尘粒子 ========================
+  var FIREFLY_COUNT = 30;
+  var fireflies = [];
+
+  function initFireflies() {
+    fireflies = [];
+    for (var i = 0; i < FIREFLY_COUNT; i++) {
+      fireflies.push({
+        x: Math.random() * W,
+        y: H * 0.35 + Math.random() * H * 0.45,
+        size: 1.5 + Math.random() * 3,
+        baseAlpha: 0.15 + Math.random() * 0.35,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.01 + Math.random() * 0.02,
+        driftX: (Math.random() - 0.5) * 0.4,
+        driftY: (Math.random() - 0.5) * 0.2,
+        wanderPhaseX: Math.random() * Math.PI * 2,
+        wanderPhaseY: Math.random() * Math.PI * 2,
+        wanderSpeedX: 0.005 + Math.random() * 0.01,
+        wanderSpeedY: 0.004 + Math.random() * 0.008,
+        wanderAmpX: 15 + Math.random() * 30,
+        wanderAmpY: 8 + Math.random() * 20,
+        isWarm: Math.random() > 0.4,  // 大部分是暖色
+      });
+    }
+  }
+
+  function drawFireflies(ctx, w, h, time) {
+    for (var i = 0; i < fireflies.length; i++) {
+      var f = fireflies[i];
+      f.phase += f.speed;
+      f.wanderPhaseX += f.wanderSpeedX;
+      f.wanderPhaseY += f.wanderSpeedY;
+      var wx = Math.sin(f.wanderPhaseX) * f.wanderAmpX;
+      var wy = Math.sin(f.wanderPhaseY) * f.wanderAmpY;
+      var drawX = f.x + wx;
+      var drawY = f.y + wy;
+      // 闪烁效果
+      var flicker = Math.sin(f.phase) * 0.5 + 0.5;
+      var alpha = f.baseAlpha * flicker * flicker;
+      if (alpha < 0.02) continue;
+      ctx.save();
+      // 外层光晕
+      var glowR = f.size * 4;
+      var glowGrad = ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, glowR);
+      if (f.isWarm) {
+        glowGrad.addColorStop(0, 'rgba(255, 210, 130, ' + (alpha * 0.5) + ')');
+        glowGrad.addColorStop(0.4, 'rgba(255, 185, 100, ' + (alpha * 0.15) + ')');
+        glowGrad.addColorStop(1, 'rgba(255, 170, 80, 0)');
+      } else {
+        glowGrad.addColorStop(0, 'rgba(200, 215, 230, ' + (alpha * 0.4) + ')');
+        glowGrad.addColorStop(0.4, 'rgba(180, 200, 220, ' + (alpha * 0.1) + ')');
+        glowGrad.addColorStop(1, 'rgba(170, 190, 210, 0)');
+      }
+      ctx.fillStyle = glowGrad;
+      ctx.fillRect(drawX - glowR, drawY - glowR, glowR * 2, glowR * 2);
+      // 中心亮点
+      ctx.beginPath();
+      ctx.arc(drawX, drawY, f.size * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = f.isWarm ? ('rgba(255, 230, 170, ' + alpha + ')') : ('rgba(220, 230, 245, ' + alpha + ')');
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // ======================== ★ 新增：流星系统 ========================
+  var shootingStars = [];
+  var SHOOTING_STAR_CHANCE = 0.002; // 每帧出现概率
+
+  function maybeCreateShootingStar(w, h) {
+    if (Math.random() > SHOOTING_STAR_CHANCE) return;
+    if (shootingStars.length >= 2) return;
+    shootingStars.push({
+      x: w * 0.2 + Math.random() * w * 0.6,
+      y: h * 0.05 + Math.random() * h * 0.2,
+      vx: 3 + Math.random() * 4,
+      vy: 1.5 + Math.random() * 2.5,
+      life: 1.0,
+      decay: 0.015 + Math.random() * 0.01,
+      length: 40 + Math.random() * 60,
+    });
+  }
+
+  function drawShootingStars(ctx) {
+    for (var i = shootingStars.length - 1; i >= 0; i--) {
+      var s = shootingStars[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life -= s.decay;
+      if (s.life <= 0) { shootingStars.splice(i, 1); continue; }
+      var tailX = s.x - s.vx * s.length / 5;
+      var tailY = s.y - s.vy * s.length / 5;
+      ctx.save();
+      ctx.globalAlpha = s.life * 0.6;
+      var grad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      grad.addColorStop(0.7, 'rgba(255, 230, 180, 0.4)');
+      grad.addColorStop(1, 'rgba(255, 240, 200, 0.9)');
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(s.x, s.y);
+      ctx.stroke();
+      // 亮点
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 240, 200, ' + (s.life * 0.8) + ')';
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // ======================== ★ 增强：日落系统 ========================
+  function drawEnhancedSunset(ctx, w, h, time) {
+    // 日落太阳位置
+    var sunX = w * 0.72 + Math.sin(time * 0.00008) * 25;
+    var sunY = h * 0.14 + Math.cos(time * 0.00006) * 8;
+
+    // 1) 天空大范围暖色渐变（更浓烈的暮光）
+    ctx.save();
+    var skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.7);
+    skyGrad.addColorStop(0, 'rgba(240, 200, 150, 0.03)');
+    skyGrad.addColorStop(0.2, 'rgba(235, 175, 115, 0.07)');
+    skyGrad.addColorStop(0.4, 'rgba(220, 140, 90, 0.10)');
+    skyGrad.addColorStop(0.6, 'rgba(203, 125, 82, 0.08)');
+    skyGrad.addColorStop(0.8, 'rgba(180, 100, 70, 0.04)');
+    skyGrad.addColorStop(1, 'rgba(203, 125, 82, 0)');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, h * 0.7);
+
+    // 1.5) 水平暮光带（地平线附近的橙色光带）
+    var horizonY = h * 0.35;
+    var horizonGrad = ctx.createLinearGradient(0, horizonY - 40, 0, horizonY + 60);
+    horizonGrad.addColorStop(0, 'rgba(220, 160, 100, 0)');
+    horizonGrad.addColorStop(0.3, 'rgba(230, 170, 110, 0.06)');
+    horizonGrad.addColorStop(0.5, 'rgba(240, 180, 120, 0.10)');
+    horizonGrad.addColorStop(0.7, 'rgba(230, 165, 105, 0.06)');
+    horizonGrad.addColorStop(1, 'rgba(220, 150, 95, 0)');
+    ctx.fillStyle = horizonGrad;
+    ctx.fillRect(w * 0.2, horizonY - 40, w * 0.7, 100);
+    ctx.restore();
+
+    // 2) 太阳光盘（增大）
+    ctx.save();
+    var diskR = 35 + Math.sin(time * 0.002) * 4;
+
+    // 最外层大光晕
+    var outerHalo = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, diskR * 10);
+    outerHalo.addColorStop(0, 'rgba(255, 220, 160, 0.10)');
+    outerHalo.addColorStop(0.2, 'rgba(255, 200, 130, 0.06)');
+    outerHalo.addColorStop(0.5, 'rgba(240, 170, 100, 0.02)');
+    outerHalo.addColorStop(1, 'rgba(203, 125, 82, 0)');
+    ctx.fillStyle = outerHalo;
+    ctx.fillRect(0, 0, w, h * 0.55);
+
+    // 外层光晕
+    var haloGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, diskR * 6);
+    haloGrad.addColorStop(0, 'rgba(255, 215, 150, 0.18)');
+    haloGrad.addColorStop(0.25, 'rgba(255, 190, 120, 0.08)');
+    haloGrad.addColorStop(0.5, 'rgba(240, 165, 95, 0.03)');
+    haloGrad.addColorStop(1, 'rgba(203, 125, 82, 0)');
+    ctx.fillStyle = haloGrad;
+    ctx.fillRect(0, 0, w, h * 0.5);
+
+    // 中层光晕
+    var midGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, diskR * 3);
+    midGrad.addColorStop(0, 'rgba(255, 230, 180, 0.30)');
+    midGrad.addColorStop(0.4, 'rgba(255, 210, 150, 0.10)');
+    midGrad.addColorStop(1, 'rgba(255, 190, 120, 0)');
+    ctx.fillStyle = midGrad;
+    ctx.fillRect(sunX - diskR * 3, sunY - diskR * 3, diskR * 6, diskR * 6);
+
+    // 太阳圆盘（更明亮）
+    var diskGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, diskR);
+    diskGrad.addColorStop(0, 'rgba(255, 240, 200, 0.50)');
+    diskGrad.addColorStop(0.4, 'rgba(255, 220, 160, 0.30)');
+    diskGrad.addColorStop(0.7, 'rgba(255, 200, 130, 0.12)');
+    diskGrad.addColorStop(1, 'rgba(255, 190, 120, 0)');
+    ctx.fillStyle = diskGrad;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, diskR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 3) 晚霞余晖光线（从太阳向外辐射的淡光带，增加到9条）
+    ctx.save();
+    ctx.globalAlpha = 0.04;
+    for (var i = 0; i < 9; i++) {
+      var angle = -0.6 + i * 0.14 + Math.sin(time * 0.001 + i * 0.7) * 0.06;
+      var len = h * 0.55 + Math.sin(time * 0.002 + i * 1.3) * 35;
+      ctx.beginPath();
+      ctx.moveTo(sunX, sunY);
+      ctx.lineTo(sunX + Math.cos(angle) * len, sunY + Math.sin(angle) * len);
+      ctx.lineTo(sunX + Math.cos(angle + 0.06) * len, sunY + Math.sin(angle + 0.06) * len);
+      ctx.closePath();
+      ctx.fillStyle = i < 4 ? '#E8B878' : (i < 7 ? '#D4A060' : '#C89050');
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // 3.5) 丁达尔光效（从太阳向下穿过山间的垂直光柱）
+    ctx.save();
+    ctx.globalAlpha = 0.025;
+    for (var i = 0; i < 5; i++) {
+      var rx = sunX - 80 + i * 40 + Math.sin(time * 0.0005 + i * 2) * 15;
+      var rw = 15 + Math.sin(time * 0.001 + i) * 5;
+      var rayGrad = ctx.createLinearGradient(rx, sunY, rx, h * 0.85);
+      rayGrad.addColorStop(0, 'rgba(255, 220, 160, 0.6)');
+      rayGrad.addColorStop(0.3, 'rgba(255, 200, 130, 0.3)');
+      rayGrad.addColorStop(0.7, 'rgba(240, 180, 110, 0.1)');
+      rayGrad.addColorStop(1, 'rgba(230, 170, 100, 0)');
+      ctx.fillStyle = rayGrad;
+      ctx.fillRect(rx - rw / 2, sunY + diskR, rw, h * 0.7);
+    }
+    ctx.restore();
+
+    // 4) 山体上的落日暖光映射（增强）
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+    var warmGrad = ctx.createLinearGradient(w * 0.45, h * 0.25, w, h * 0.8);
+    warmGrad.addColorStop(0, 'rgba(235, 175, 115, 0.4)');
+    warmGrad.addColorStop(0.3, 'rgba(220, 155, 95, 0.25)');
+    warmGrad.addColorStop(0.6, 'rgba(210, 140, 85, 0.10)');
+    warmGrad.addColorStop(1, 'rgba(190, 130, 80, 0)');
+    ctx.fillStyle = warmGrad;
+    ctx.fillRect(w * 0.35, h * 0.2, w * 0.65, h * 0.6);
+    ctx.restore();
+  }
+
+  // ======================== 音乐律动系统 ========================
+  var _musicBeat = 0;
+  var _musicFreq = 261.63;
+  var _musicNoteIdx = 0;
+
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'musicBeat') {
+      _musicBeat = 1.0;
+      _musicFreq = e.data.frequency || 261.63;
+      _musicNoteIdx = e.data.noteIndex || 0;
+    }
+  });
+
+  function _noteNorm() {
+    var freqs = [261.63, 293.66, 329.63, 392.00, 440.00];
+    return _musicNoteIdx / (freqs.length - 1);
+  }
+
+  // ======================== 工具函数 ========================
+  function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return 'rgba('+r+','+g+','+b+','+alpha+')';
+  }
+
+  function shadeColor(hex, amt) {
+    let r = parseInt(hex.slice(1,3),16);
+    let g = parseInt(hex.slice(3,5),16);
+    let b = parseInt(hex.slice(5,7),16);
+    r = Math.min(255, Math.max(0, r+amt));
+    g = Math.min(255, Math.max(0, g+amt));
+    b = Math.min(255, Math.max(0, b+amt));
+    return 'rgb('+r+','+g+','+b+')';
+  }
+
+  function generateParchment(w, h, dpr) {
+    const pw = Math.ceil(w * dpr);
+    const ph = Math.ceil(h * dpr);
+    const oc = document.createElement('canvas');
+    oc.width = pw; oc.height = ph;
+    const octx = oc.getContext('2d');
+    octx.fillStyle = PALETTE.parchment;
+    octx.fillRect(0, 0, pw, ph);
+    const step = 3;
+    const nw = Math.ceil(pw / step);
+    const nh = Math.ceil(ph / step);
+    const imgData = octx.createImageData(nw, nh);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const n = (Math.random() - 0.5) * 14;
+      d[i] = 240 + n; d[i+1] = 228 + n; d[i+2] = 206 + n; d[i+3] = 255;
+    }
+    const tmp = document.createElement('canvas');
+    tmp.width = nw; tmp.height = nh;
+    tmp.getContext('2d').putImageData(imgData, 0, 0);
+    octx.imageSmoothingEnabled = false;
+    octx.drawImage(tmp, 0, 0, pw, ph);
+    octx.globalAlpha = 0.03;
+    for (let i = 0; i < 200; i++) {
+      const y = Math.random() * ph;
+      octx.fillStyle = '#8B6B4A';
+      octx.fillRect(0, y, pw, 1 + Math.random() * 2);
+    }
+    octx.globalAlpha = 1;
+    return oc;
+  }
+
+  function getMountainY(x, w, layer, timeOffset) {
+    const t = x / w;
+    let y = 0;
+    for (let i = 0; i < layer.waves.length; i++) {
+      const wave = layer.waves[i];
+      y += wave.amp * Math.sin(t * wave.freq * Math.PI * 2 + wave.phase + timeOffset);
+    }
+    return y;
+  }
+
+  function drawMountainLayer(ctx, w, h, layer, offsetX, breathY, timeOffset, beatPulse) {
+    const baseY = layer.baseY * h;
+    const points = [];
+    for (let x = 0; x <= w; x += 2) {
+      const ry = baseY + getMountainY(x, w, layer, timeOffset);
+      points.push({ x: x + offsetX, y: ry });
+    }
+
+    ctx.save();
+    ctx.globalAlpha = layer.opacity;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.lineTo(points[points.length-1].x, h);
+    ctx.lineTo(points[0].x, h);
+    ctx.closePath();
+    const bodyGrad = ctx.createLinearGradient(0, baseY - 100, 0, h);
+    bodyGrad.addColorStop(0, layer.bodyColor);
+    bodyGrad.addColorStop(0.35, layer.bodyColor);
+    bodyGrad.addColorStop(1, shadeColor(layer.bodyColor, -30));
+    ctx.fillStyle = bodyGrad;
+    ctx.fill();
+
+    ctx.globalCompositeOperation = 'source-atop';
+    const sideGrad = ctx.createLinearGradient(w * 0.3, 0, w, 0);
+    sideGrad.addColorStop(0, 'rgba(0,0,0,0.08)');
+    sideGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
+    sideGrad.addColorStop(1, 'rgba(255,200,150,0.06)');
+    ctx.fillStyle = sideGrad;
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.closePath();
+    ctx.clip();
+    const snowGrad = ctx.createLinearGradient(0, baseY - 30, 0, baseY + layer.snowHeight);
+    snowGrad.addColorStop(0, hexToRgba(layer.snowColor, 0.92));
+    snowGrad.addColorStop(0.5, hexToRgba(layer.snowColor, 0.4));
+    snowGrad.addColorStop(1, hexToRgba(layer.snowColor, 0));
+    ctx.fillStyle = snowGrad;
+    ctx.fillRect(0, 0, w, baseY + layer.snowHeight);
+    ctx.restore();
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = layer.opacity * 1.1;
+    ctx.strokeStyle = layer.ridgeColor;
+    ctx.lineWidth = layer.lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = layer.opacity * 0.18;
+    ctx.strokeStyle = hexToRgba(layer.snowColor, 1);
+    ctx.lineWidth = layer.lineWidth * 0.6;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y - 1.5);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y - 1.5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawMist(ctx, w, h, yPos, breathY, beatPulse) {
+    const y = yPos * h;
+    ctx.save();
+    const mistGrad = ctx.createLinearGradient(0, y - 50, 0, y + 50);
+    mistGrad.addColorStop(0, 'rgba(212, 206, 195, 0)');
+    mistGrad.addColorStop(0.3, 'rgba(226, 221, 213, 0.18)');
+    mistGrad.addColorStop(0.5, 'rgba(226, 221, 213, 0.30)');
+    mistGrad.addColorStop(0.7, 'rgba(226, 221, 213, 0.18)');
+    mistGrad.addColorStop(1, 'rgba(212, 206, 195, 0)');
+    ctx.fillStyle = mistGrad;
+    ctx.fillRect(0, y - 50, w, 100);
+    ctx.restore();
+  }
+
+  function drawSkyGlow(ctx, w, h, time, beatPulse) {
+    const glowX = w * 0.68 + Math.sin(time * 0.0001) * 30;
+    const glowY = h * 0.18;
+    const glowR = Math.min(w, h) * 0.6;
+    ctx.save();
+    var glowAlpha = 0.12;
+    const grad = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowR);
+    grad.addColorStop(0, 'rgba(203, 125, 82, ' + glowAlpha + ')');
+    grad.addColorStop(0.3, 'rgba(220, 150, 100, ' + (glowAlpha*0.5) + ')');
+    grad.addColorStop(0.5, 'rgba(212, 144, 96, ' + (glowAlpha*0.25) + ')');
+    grad.addColorStop(0.7, 'rgba(212, 144, 96, ' + (glowAlpha*0.1) + ')');
+    grad.addColorStop(1, 'rgba(203, 125, 82, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  function drawSnowParticles(ctx, particles, w, h, breathY, beatPulse) {
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      const twinkle = Math.sin(p.twinklePhase) * 0.4 + 0.6;
+      const alpha = Math.min(1, p.baseAlpha * twinkle);
+      ctx.fillStyle = 'rgba(245, 240, 235, ' + alpha + ')';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawTrails(ctx, trailPoints) {
+    const now = performance.now() / 1000;
+    for (let i = 0; i < trailPoints.length; i++) {
+      const p = trailPoints[i];
+      const age = now - p.birth;
+      if (age > TRAIL_LIFETIME) continue;
+      const lifeFrac = 1 - age / TRAIL_LIFETIME;
+      const alpha = p.baseAlpha * lifeFrac * lifeFrac;
+      ctx.fillStyle = 'rgba(210, 200, 185, ' + alpha + ')';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * (0.7 + lifeFrac * 0.3), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawRipples(ctx, ripples) {
+    const now = performance.now() / 1000;
+    for (let i = 0; i < ripples.length; i++) {
+      const r = ripples[i];
+      const age = now - r.birth;
+      if (age > RIPPLE_LIFETIME) continue;
+      const progress = age / RIPPLE_LIFETIME;
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const alpha = 0.4 * (1 - progress);
+      const radius = r.maxRadius * ease;
+      ctx.strokeStyle = r.color.replace('1)', alpha + ')');
+      ctx.lineWidth = 1.5 * (1 - progress * 0.6);
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  function drawMistOverFigure(ctx, w, h, time) {
+    var y0 = h * 0.62;
+    var drift = Math.sin(time * 0.001) * 25;
+    ctx.save();
+    var mistG = ctx.createLinearGradient(0, y0 - 25, 0, y0 + 55);
+    mistG.addColorStop(0, 'rgba(226,221,213,0)');
+    mistG.addColorStop(0.2, 'rgba(226,221,213,0.06)');
+    mistG.addColorStop(0.4, 'rgba(226,221,213,0.14)');
+    mistG.addColorStop(0.7, 'rgba(226,221,213,0.18)');
+    mistG.addColorStop(1, 'rgba(212,206,195,0)');
+    ctx.fillStyle = mistG;
+    ctx.fillRect(0, y0 - 25, w, 80);
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = PALETTE.mistLight;
+    ctx.beginPath();
+    ctx.ellipse(w * 0.55 + drift, y0 + 8, 180, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.72 - drift * 0.5, y0 + 3, 140, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.40 + drift * 0.4, y0 + 15, 120, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 额外薄雾
+    ctx.globalAlpha = 0.07;
+    ctx.beginPath();
+    ctx.ellipse(w * 0.2 + drift * 0.6, y0 + 5, 100, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.88 - drift * 0.3, y0 + 12, 110, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawStream(ctx, w, h, time, parallaxX) {
+    var baseY = h * 0.80;
+    var offX = parallaxX * 14;
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    var streamGrad = ctx.createLinearGradient(0, baseY - 10, 0, baseY + 30);
+    streamGrad.addColorStop(0, 'rgba(139,157,168,0)');
+    streamGrad.addColorStop(0.3, 'rgba(155,172,182,0.25)');
+    streamGrad.addColorStop(0.7, 'rgba(139,157,168,0.20)');
+    streamGrad.addColorStop(1, 'rgba(139,157,168,0)');
+    ctx.fillStyle = streamGrad;
+    ctx.beginPath();
+    ctx.moveTo(-20 + offX, baseY);
+    ctx.quadraticCurveTo(w * 0.2 + offX, baseY - 12, w * 0.4 + offX, baseY + 2);
+    ctx.quadraticCurveTo(w * 0.55 + offX, baseY + 14, w * 0.72 + offX, baseY + 5);
+    ctx.quadraticCurveTo(w * 0.85 + offX, baseY - 2, w + 20 + offX, baseY + 8);
+    ctx.lineTo(w + 20 + offX, baseY + 28);
+    ctx.quadraticCurveTo(w * 0.85 + offX, baseY + 18, w * 0.72 + offX, baseY + 22);
+    ctx.quadraticCurveTo(w * 0.55 + offX, baseY + 30, w * 0.4 + offX, baseY + 20);
+    ctx.quadraticCurveTo(w * 0.2 + offX, baseY + 8, -20 + offX, baseY + 18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 0.12;
+    ctx.strokeStyle = '#8B9DA8';
+    ctx.lineWidth = 0.8;
+    ctx.lineCap = 'round';
+    for (var i = 0; i < 3; i++) {
+      var yOff = baseY + 3 + i * 6;
+      var drift = Math.sin(time * 0.003 + i * 1.5) * 8;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.15 + offX + drift, yOff);
+      ctx.quadraticCurveTo(w * 0.35 + offX + drift, yOff - 3 + Math.sin(time*0.005+i)*2, w * 0.55 + offX + drift, yOff + 1);
+      ctx.quadraticCurveTo(w * 0.7 + offX + drift, yOff + 4 + Math.sin(time*0.004+i)*2, w * 0.85 + offX + drift, yOff);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 0.06;
+    ctx.fillStyle = '#E8E4DC';
+    var hlDrift = Math.sin(time * 0.002) * 15;
+    ctx.beginPath();
+    ctx.ellipse(w * 0.5 + offX + hlDrift, baseY + 5, 50, 3, -0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.72 + offX - hlDrift * 0.5, baseY + 8, 35, 2.5, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawGroundMist(ctx, w, h, time) {
+    var y0 = h * 0.68;
+    ctx.save();
+    var mistG = ctx.createLinearGradient(0, y0 - 30, 0, y0 + 70);
+    mistG.addColorStop(0, 'rgba(212,206,195,0)');
+    mistG.addColorStop(0.2, 'rgba(226,221,213,0.10)');
+    mistG.addColorStop(0.4, 'rgba(226,221,213,0.22)');
+    mistG.addColorStop(0.7, 'rgba(226,221,213,0.25)');
+    mistG.addColorStop(1, 'rgba(212,206,195,0)');
+    ctx.fillStyle = mistG;
+    ctx.fillRect(0, y0 - 30, w, 100);
+    var drift = Math.sin(time * 0.0015) * 20;
+    ctx.globalAlpha = 0.14;
+    ctx.fillStyle = PALETTE.mistLight;
+    ctx.beginPath();
+    ctx.ellipse(w * 0.3 + drift, y0 + 10, 150, 26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.7 - drift * 0.6, y0 + 5, 170, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.5 + drift * 0.3, y0 + 18, 120, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 额外的薄雾团
+    ctx.globalAlpha = 0.08;
+    ctx.beginPath();
+    ctx.ellipse(w * 0.15 - drift * 0.4, y0 + 12, 110, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.85 + drift * 0.5, y0 + 8, 130, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawMusicAura(ctx, w, h, beatPulse, noteNorm) {
+    if (beatPulse < 0.05) return;
+    ctx.save();
+    var colors = [
+      [212,168,83], [168,184,192], [107,163,128], [196,80,62], [74,80,138]
+    ];
+    var ci = Math.floor(noteNorm * 4.99);
+    ci = Math.min(4, Math.max(0, ci));
+    var c = colors[ci];
+    var alpha = beatPulse * 0.08;
+    var cx = w * 0.5 + Math.sin(noteNorm * Math.PI * 2) * w * 0.15;
+    var cy = h * 0.35;
+    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 0.35);
+    grad.addColorStop(0, 'rgba('+c[0]+','+c[1]+','+c[2]+','+alpha+')');
+    grad.addColorStop(0.5, 'rgba('+c[0]+','+c[1]+','+c[2]+','+(alpha*0.3)+')');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
+  // ======================== 初始化 ========================
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  let W = 0, H = 0, dpr = 1;
+  let parchment = null;
+  let snowParticles = [];
+  let trailPoints = [];
+  let ripples = [];
+  let time = 0;
+  let smoothMX = 0, smoothMY = 0, targetMX = 0, targetMY = 0;
+
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    W = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+    H = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    parchment = generateParchment(W, H, dpr);
+    initSnow();
+    initBirds();
+    initClouds();
+    initFireflies();
+    targetMX = W / 2; targetMY = H / 2;
+    smoothMX = W / 2; smoothMY = H / 2;
+  }
+
+  function initSnow() {
+    snowParticles = [];
+    for (let i = 0; i < SNOW_COUNT; i++) {
+      snowParticles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        size: 1.5 + Math.random() * 2.5,
+        baseAlpha: 0.25 + Math.random() * 0.4,
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: 0.008 + Math.random() * 0.025,
+        driftX: (Math.random() - 0.5) * 0.35,
+        driftY: 0.08 + Math.random() * 0.25,
+      });
+    }
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  canvas.addEventListener('mousemove', function(e) {
+    targetMX = e.clientX;
+    targetMY = e.clientY;
+    const count = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      trailPoints.push({
+        x: e.clientX + (Math.random() - 0.5) * 10,
+        y: e.clientY + (Math.random() - 0.5) * 7,
+        size: 2.5 + Math.random() * 5,
+        baseAlpha: 0.25 + Math.random() * 0.3,
+        birth: performance.now() / 1000,
+      });
+    }
+    while (trailPoints.length > TRAIL_MAX) trailPoints.shift();
+  });
+
+  canvas.addEventListener('click', function(e) {
+    const colors = [
+      'rgba(139, 157, 168, 1)',
+      'rgba(237, 232, 222, 1)',
+      'rgba(155, 118, 83, 1)',
+      'rgba(212, 206, 195, 1)',
+    ];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    ripples.push({
+      x: e.clientX,
+      y: e.clientY,
+      maxRadius: 100 + Math.random() * 120,
+      color: color,
+      birth: performance.now() / 1000,
+    });
+    if (e.clientY < H * 0.75) {
+      try { parent.startDialog(); } catch(ex) {}
+    }
+  });
+
+  // ======================== 动画循环 ========================
+  var _sceneInited = false;
+  function animate() {
+    if(W < 2 || H < 2){
+      if(window.innerWidth > 0 && window.innerHeight > 0) resize();
+      requestAnimationFrame(animate); return;
+    }
+    if(!_sceneInited){ _sceneInited = true; }
+    time++;
+
+    _musicBeat *= 0.92;
+    if (_musicBeat < 0.01) _musicBeat = 0;
+    var beatPulse = _musicBeat;
+
+    smoothMX += (targetMX - smoothMX) * 0.04;
+    smoothMY += (targetMY - smoothMY) * 0.04;
+
+    const breathY = Math.sin(time * 0.0035) * 1.5;
+    const timePhase = time * 0.0009;
+    const parallaxBaseX = (smoothMX / W - 0.5) * 2;
+    const parallaxBaseY = (smoothMY / H - 0.5) * 2;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // 1. 羊皮纸背景
+    if (parchment) {
+      ctx.drawImage(parchment, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = PALETTE.parchment;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // 2. ★ 增强日落效果（替换原来的简单落日余晖）
+    drawEnhancedSunset(ctx, W, H, time);
+
+    // 2.5 原始落日余晖叠加（保留兼容）
+    drawSkyGlow(ctx, W, H, time, beatPulse);
+
+    // 2.6 音乐律动光晕
+    drawMusicAura(ctx, W, H, beatPulse, _noteNorm());
+
+    // 3. 逐层绘制山体（★ 在山层之间穿插飞鸟和云朵）
+    for (let i = 0; i < MOUNTAIN_LAYERS.length; i++) {
+      const layer = MOUNTAIN_LAYERS[i];
+      const offX = parallaxBaseX * layer.parallax;
+      const offY = parallaxBaseY * layer.parallax * 0.25;
+      drawMountainLayer(ctx, W, H, layer, offX, offY, timePhase, 0);
+
+      // ★ 在每层山体之后绘制该层的云朵
+      drawCloudsForLayer(ctx, i, W, H, time, parallaxBaseX, timePhase);
+
+      // ★ 在每层山体之后绘制该层的飞鸟
+      drawBirdsForLayer(ctx, i, W, H, time, parallaxBaseX);
+
+      if (i < MOUNTAIN_LAYERS.length - 1) {
+        const mistY = (layer.baseY + MOUNTAIN_LAYERS[i+1].baseY) / 2;
+        drawMist(ctx, W, H, mistY, breathY, 0);
+      }
+    }
+
+    // 3.5 底部薄雾 + 薄雾笼罩 + 溪水
+    drawGroundMist(ctx, W, H, time);
+    drawMistOverFigure(ctx, W, H, time);
+    drawStream(ctx, W, H, time, parallaxBaseX);
+
+    // 3.6 ★ 萤火虫 / 浮尘粒子
+    drawFireflies(ctx, W, H, time);
+
+    // 3.7 ★ 流星
+    maybeCreateShootingStar(W, H);
+    drawShootingStars(ctx);
+
+    // 4. 霜雪粒子
+    for (let i = 0; i < snowParticles.length; i++) {
+      const p = snowParticles[i];
+      p.y += p.driftY;
+      p.x += p.driftX;
+      p.twinklePhase += p.twinkleSpeed;
+      if (p.y > H + 15) { p.y = -15; p.x = Math.random() * W; }
+      if (p.x < -15) p.x = W + 15;
+      if (p.x > W + 15) p.x = -15;
+    }
+    drawSnowParticles(ctx, snowParticles, W, H, breathY, beatPulse);
+
+    // 5. 毛笔拖尾
+    drawTrails(ctx, trailPoints);
+
+    // 6. 墨韵涟漪
+    drawRipples(ctx, ripples);
+
+    // 清理过期对象
+    const now = performance.now() / 1000;
+    trailPoints = trailPoints.filter(function(p) { return now - p.birth < TRAIL_LIFETIME; });
+    ripples = ripples.filter(function(r) { return now - r.birth < RIPPLE_LIFETIME; });
+
+    requestAnimationFrame(animate);
+  }
+
+  // ★ 按层级绘制飞鸟（只绘制属于该层的鸟）
+  function drawBirdsForLayer(ctx, layerIdx, w, h, time, parallaxBaseX) {
+    for (var i = 0; i < birds.length; i++) {
+      if (birds[i].layerIdx !== layerIdx) continue;
+      var b = birds[i];
+      b.x += b.speed;
+      b.wingPhase += b.wingSpeed;
+      b.bobPhase += 0.02;
+      var offX = parallaxBaseX * b.parallax;
+      var drawX = b.x + offX;
+      var bobY = Math.sin(b.bobPhase) * b.bobAmp;
+      var mountainY = b.baseY * h + getMountainY(b.x, w, MOUNTAIN_LAYERS[b.layerIdx], time * 0.0009);
+      var drawY = mountainY + b.yOffset + bobY;
+      if (b.speed > 0 && b.x > w + 60) { birds[i] = createBird(false); birds[i].x = -40; birds[i].speed = Math.abs(birds[i].speed); }
+      else if (b.speed < 0 && b.x < -60) { birds[i] = createBird(false); birds[i].x = w + 40; birds[i].speed = -Math.abs(birds[i].speed); }
+      var s = b.size;
+      var wingY = Math.sin(b.wingPhase) * s * 0.8;
+
+      // 绘制单只鸟
+      function drawOneBird(bx, by) {
+        ctx.save();
+        ctx.globalAlpha = b.opacity;
+        ctx.strokeStyle = b.layerIdx === 0 ? '#8B9DA8' : (b.layerIdx === 1 ? '#6B5E4F' : '#4A3F32');
+        ctx.lineWidth = Math.max(1, s * 0.25);
+        ctx.lineCap = 'round';
+        // 身体
+        ctx.beginPath();
+        ctx.moveTo(bx - s * 1.2, by);
+        ctx.quadraticCurveTo(bx, by - s * 0.3, bx + s * 1.2, by);
+        ctx.stroke();
+        // 左翼
+        ctx.beginPath();
+        ctx.moveTo(bx - s * 0.3, by - s * 0.1);
+        ctx.quadraticCurveTo(bx - s * 1.5, by - wingY - s * 0.5, bx - s * 2.2, by - wingY);
+        ctx.stroke();
+        // 右翼
+        ctx.beginPath();
+        ctx.moveTo(bx + s * 0.3, by - s * 0.1);
+        ctx.quadraticCurveTo(bx + s * 1.5, by - wingY - s * 0.5, bx + s * 2.2, by - wingY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      drawOneBird(drawX, drawY);
+      // 同伴鸟
+      if (b.hasFollower) {
+        var fWingPhase = b.wingPhase + 0.8;
+        var fWingY = Math.sin(fWingPhase) * s * 0.7;
+        drawOneBird(drawX + b.followerOffX * (b.speed > 0 ? 1 : -1), drawY + b.followerOffY);
+      }
+    }
+  }
+
+  // ★ 按层级绘制云朵（只绘制属于该层的云，带日落暖色和底部阴影）
+  function drawCloudsForLayer(ctx, layerIdx, w, h, time, parallaxBaseX, timePhase) {
+    for (var i = 0; i < clouds.length; i++) {
+      if (clouds[i].layerIdx !== layerIdx) continue;
+      var c = clouds[i];
+      c.x += c.speed;
+      c.driftPhase += 0.003;
+      var offX = parallaxBaseX * c.parallax;
+      var drawX = c.x + offX;
+      var driftY = Math.sin(c.driftPhase) * c.driftAmp;
+      var mountainY = c.baseY * h + getMountainY(c.x, w, MOUNTAIN_LAYERS[c.layerIdx], timePhase);
+      var drawY = mountainY + c.yOffset + driftY;
+      if (c.x > w + 350) { clouds[i] = createCloud(false); clouds[i].x = -350; }
+      else if (c.x < -350) { clouds[i] = createCloud(false); clouds[i].x = w + 350; clouds[i].speed = -Math.abs(clouds[i].speed); }
+
+      ctx.save();
+      // 云朵主体
+      ctx.globalAlpha = c.opacity;
+      if (c.isWarm) {
+        // 日落暖色云朵
+        var warmCloudGrad = ctx.createLinearGradient(drawX - c.width * 0.3, drawY - c.height * 0.3, drawX + c.width * 0.3, drawY + c.height * 0.5);
+        warmCloudGrad.addColorStop(0, '#F2DCC0');
+        warmCloudGrad.addColorStop(0.5, '#E8CCAA');
+        warmCloudGrad.addColorStop(1, '#D4B898');
+        ctx.fillStyle = warmCloudGrad;
+      } else {
+        ctx.fillStyle = PALETTE.mistLight;
+      }
+
+      for (var j = 0; j < c.blobs.length; j++) {
+        var bl = c.blobs[j];
+        var bx = drawX + bl.xOff * c.width;
+        var by = drawY + bl.yOff * c.height;
+        var brx = c.width * 0.35 * bl.rxScale;
+        var bry = c.height * 0.5 * bl.ryScale;
+        ctx.beginPath();
+        ctx.ellipse(bx, by, Math.max(5, brx), Math.max(3, bry), 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 云朵底部阴影（给云增加立体感）
+      ctx.globalAlpha = c.opacity * 0.35;
+      ctx.fillStyle = c.isWarm ? 'rgba(160, 130, 100, 0.15)' : 'rgba(180, 170, 155, 0.12)';
+      for (var j = 0; j < c.blobs.length; j++) {
+        var bl = c.blobs[j];
+        var bx = drawX + bl.xOff * c.width;
+        var by = drawY + bl.yOff * c.height + c.height * 0.25;
+        var brx = c.width * 0.30 * bl.rxScale;
+        var bry = c.height * 0.25 * bl.ryScale;
+        ctx.beginPath();
+        ctx.ellipse(bx, by, Math.max(4, brx), Math.max(2, bry), 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 云朵顶部高光（给云增加光泽感）
+      if (c.isLarge) {
+        ctx.globalAlpha = c.opacity * 0.2;
+        ctx.fillStyle = 'rgba(255, 245, 230, 0.15)';
+        for (var j = 0; j < c.blobs.length; j++) {
+          var bl = c.blobs[j];
+          var bx = drawX + bl.xOff * c.width;
+          var by = drawY + bl.yOff * c.height - c.height * 0.15;
+          var brx = c.width * 0.22 * bl.rxScale;
+          var bry = c.height * 0.18 * bl.ryScale;
+          ctx.beginPath();
+          ctx.ellipse(bx, by, Math.max(3, brx), Math.max(2, bry), 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      ctx.restore();
+    }
+  }
+
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>

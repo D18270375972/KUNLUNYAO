@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>瑶池赋 · 昆仑谣</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #f5f0e6; cursor: crosshair; user-select: none; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .yaochi-title {
+    position: absolute; top: 5%; left: 50%; transform: translateX(-50%);
+    pointer-events: none; z-index: 10; text-align: center;
+    animation: titleFloat 6s ease-in-out infinite;
+  }
+  .yaochi-title .main {
+    font-size: clamp(28px, 5vw, 56px);
+    color: #6b5a4a; letter-spacing: 0.3em;
+    text-shadow: 0 0 30px rgba(180,160,140,0.3); font-weight: normal;
+    font-family: "STKaiti", "KaiTi", "楷体", "FangSong", "仿宋", serif;
+  }
+  .yaochi-title .sub {
+    font-size: clamp(12px, 1.5vw, 18px);
+    color: #9b8a7a; letter-spacing: 0.5em; margin-top: 4px; opacity: 0.7;
+    font-family: "STKaiti", "KaiTi", "楷体", "FangSong", "仿宋", serif;
+  }
+  @keyframes titleFloat {
+    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.85; }
+    50% { transform: translateX(-50%) translateY(-8px); opacity: 1; }
+  }
+  .yaochi-hint {
+    position: absolute; bottom: 6%; left: 50%; transform: translateX(-50%);
+    pointer-events: none; z-index: 10;
+    font-size: 13px; color: #9b8a7a; opacity: 0.5; letter-spacing: 0.2em;
+    animation: hintPulse 4s ease-in-out infinite;
+    font-family: "STKaiti", "KaiTi", "楷体", "FangSong", "仿宋", serif;
+  }
+  @keyframes hintPulse { 0%,100% { opacity:0.3; } 50% { opacity:0.6; } }
+  /* NPC 对话提示 */
+  .npc-dialog-hint {
+    position: absolute; bottom: 13%; left: 50%; transform: translateX(-50%);
+    z-index: 20; pointer-events: none;
+    padding: 6px 18px; border-radius: 999px;
+    background: rgba(107,90,74,0.75); color: #E8D0A0;
+    font-size: 13px; letter-spacing: 0.18em;
+    border: 1px solid rgba(212,168,83,0.3);
+    backdrop-filter: blur(4px);
+    opacity: 0; animation: npcHintFade 6s ease-in-out 1.5s forwards;
+    font-family: "STKaiti", "KaiTi", "楷体", "FangSong", "仿宋", serif;
+  }
+  @keyframes npcHintFade {
+    0% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    75% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .npc-click-zone {
+    position: absolute; z-index: 15; cursor: pointer;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,168,83,0.08) 0%, transparent 70%);
+    transition: background .3s;
+  }
+  .npc-click-zone:hover {
+    background: radial-gradient(circle, rgba(212,168,83,0.18) 0%, transparent 70%);
+  }
+  .npc-click-zone::after {
+    content: ''; position: absolute; inset: 10%; border-radius: 50%;
+    border: 1.5px dashed rgba(212,168,83,0.25);
+    animation: npcRing 3s ease-in-out infinite;
+  }
+  @keyframes npcRing {
+    0%,100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.1); opacity: 0.6; }
+  }
+  /* ★ 五色瑶池弹窗 */
+  .wuse-dialog {
+    position: absolute; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(30,25,20,0.55); backdrop-filter: blur(6px);
+    animation: wuseFadeIn 0.8s ease-out;
+  }
+  .wuse-dialog.hidden { display: none; }
+  @keyframes wuseFadeIn { from { opacity:0; } to { opacity:1; } }
+  .wuse-card {
+    background: linear-gradient(135deg, rgba(60,50,40,0.92), rgba(45,38,30,0.95));
+    border: 1.5px solid rgba(212,168,83,0.4); border-radius: 16px;
+    padding: 32px 40px; text-align: center; max-width: 420px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    animation: wuseCardIn 0.6s ease-out 0.2s both;
+  }
+  @keyframes wuseCardIn { from { opacity:0; transform:translateY(20px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
+  .wuse-card h2 {
+    color: #E8D0A0; font-size: 24px; letter-spacing: 0.25em; margin-bottom: 12px;
+    font-family: "STKaiti", "KaiTi", "楷体", serif; font-weight: normal;
+    text-shadow: 0 0 20px rgba(212,168,83,0.3);
+  }
+  .wuse-card p {
+    color: #C0AA88; font-size: 14px; line-height: 1.8; letter-spacing: 0.1em; margin-bottom: 24px;
+    font-family: "STKaiti", "KaiTi", "楷体", serif;
+  }
+  .wuse-btns { display: flex; gap: 16px; justify-content: center; }
+  .wuse-btn {
+    padding: 10px 28px; border-radius: 8px; font-size: 15px; cursor: pointer;
+    letter-spacing: 0.15em; transition: all 0.3s;
+    font-family: "STKaiti", "KaiTi", "楷体", serif;
+  }
+  .wuse-btn-yes {
+    background: linear-gradient(135deg, #8B6914, #C49520); color: #FFF8E0;
+    border: 1px solid rgba(212,168,83,0.5);
+    box-shadow: 0 2px 12px rgba(196,149,32,0.3);
+  }
+  .wuse-btn-yes:hover { background: linear-gradient(135deg, #A07818, #D4A528); transform: translateY(-1px); }
+  .wuse-btn-no {
+    background: rgba(80,70,60,0.6); color: #A89880;
+    border: 1px solid rgba(160,140,120,0.3);
+  }
+  .wuse-btn-no:hover { background: rgba(90,80,70,0.7); }
+  /* ★ 五色手势提示面板 */
+  .wuse-guide {
+    position: absolute; top: 12%; left: 50%; transform: translateX(-50%);
+    z-index: 90; pointer-events: none; text-align: center;
+    animation: wuseGuideIn 1s ease-out;
+  }
+  .wuse-guide.hidden { display: none; }
+  @keyframes wuseGuideIn { from { opacity:0; transform:translateX(-50%) translateY(-15px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+  .wuse-guide-inner {
+    background: rgba(50,42,35,0.82); border: 1px solid rgba(212,168,83,0.3);
+    border-radius: 12px; padding: 14px 28px; backdrop-filter: blur(4px);
+  }
+  .wuse-guide-inner h3 {
+    color: #E8D0A0; font-size: 16px; letter-spacing: 0.2em; margin-bottom: 8px;
+    font-family: "STKaiti", "KaiTi", "楷体", serif; font-weight: normal;
+  }
+  .wuse-guide-inner p {
+    color: #B8A888; font-size: 12px; letter-spacing: 0.1em; line-height: 1.8;
+    font-family: "STKaiti", "KaiTi", "楷体", serif;
+  }
+  /* ★ 五色指示器 */
+  .wuse-indicator {
+    position: absolute; bottom: 14%; left: 50%; transform: translateX(-50%);
+    z-index: 90; text-align: center;
+    animation: wuseIndIn 0.6s ease-out;
+  }
+  .wuse-indicator.hidden { display: none; }
+  @keyframes wuseIndIn { from { opacity:0; } to { opacity:1; } }
+  .wuse-ind-dots { display: flex; gap: 14px; align-items: center; pointer-events: auto; }
+  .wuse-dot {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
+    transition: all 0.5s; opacity: 0.4; cursor: pointer; pointer-events: auto;
+  }
+  .wuse-dot:hover { opacity: 0.7; transform: scale(1.1); }
+  .wuse-dot.active { border-color: rgba(255,255,255,0.8); opacity: 1; transform: scale(1.25); box-shadow: 0 0 15px currentColor; }
+  .wuse-label {
+    color: #E8D0A0; font-size: 16px; letter-spacing: 0.3em; margin-top: 8px;
+    font-family: "STKaiti", "KaiTi", "楷体", serif;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div class="yaochi-title">
+  <h1 class="main">瑶 池 赋</h1>
+  <p class="sub">昆 仑 仙 境 · 瑶 池 胜 境</p>
+</div>
+<div class="yaochi-hint">移动鼠标游观仙境 · 点击场景任意处与西王母对话</div>
+<div class="npc-click-zone" id="npcZone" style="bottom:8%;right:15%;width:160px;height:180px;transform:translate(50%,0)">
+  <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);white-space:nowrap;color:rgba(212,168,83,.55);font-size:13px;letter-spacing:.15em;font-family:STKaiti,KaiTi,楷体,serif;pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,.2)">👸 西王母</div>
+</div>
+<div class="npc-dialog-hint">👆 点击此处与西王母对话</div>
+<!-- ★ 五色瑶池确认弹窗 -->
+<div class="wuse-dialog" id="wuseDialog">
+  <div class="wuse-card">
+    <h2>✦ 五色瑶池 ✦</h2>
+    <p>西王母执掌昆仑瑶池，池水可化为五色，对应五行之力。<br>是否开启五色瑶池？</p>
+    <div class="wuse-btns">
+      <button class="wuse-btn wuse-btn-yes" id="wuseYes">开启五色</button>
+      <button class="wuse-btn wuse-btn-no" id="wuseNo">暂不开启</button>
+    </div>
+  </div>
+</div>
+<!-- ★ 五色手势指引 -->
+<div class="wuse-guide hidden" id="wuseGuide">
+  <div class="wuse-guide-inner">
+    <h3>✦ 五色瑶池 ✦</h3>
+    <p>左右滑动掌换五行 · 底部圆点亦可点选<br>金·月华  木·青墨  水·澄碧  火·烟霞  土·蜜金</p>
+  </div>
+</div>
+<!-- ★ 五色指示器 -->
+<div class="wuse-indicator hidden" id="wuseIndicator">
+  <div class="wuse-ind-dots" id="wuseDots"></div>
+  <div class="wuse-label" id="wuseLabel">翠</div>
+</div>
+<script>
+(function(){
+  // ═══════════════════════════════════════════════════════════
+  //  ★ 五色瑶池系统
+  // ═══════════════════════════════════════════════════════════
+  var WUSE_MODE = false;        // 是否开启五色模式
+  var WUSE_IDX = 1;             // 当前五色索引 0-4
+  var WUSE_TRANSITION = 0;      // 过渡进度 0-1
+  var WUSE_TARGET = 1;          // 目标索引
+  var WUSE_SWIPE_START = null;  // 滑动起点
+
+  // ★ 五色配置——五彩池风格「流光溢彩」
+  // 核心原理：每色 = 主色相 + 副色相 + 流光色 + 流动色带 + 彩色光点 + 彩虹微注 = 丰富多彩的池水
+  // 新增属性：waterAlt(副色), shimmerHue(流光色)
+  //           flowColors(6色流动色带·含彩虹色), colorDots(7色彩色光点·含赤橙黄绿青蓝紫)
+  //           rainbowTint(7色彩虹微注·极淡的赤橙黄绿青蓝紫点)
+  var WUSE_COLORS = [
+    // ═════════ 金 · 月华 ═════════
+    { name:'月华', char:'金', element:'Metal', accent:'#8EA8BE',
+      // 月光冷蓝 → 暖米金，银辉带金，点缀淡紫与琥珀
+      waterNear:[192,212,228],   waterMid:[168,195,218],
+      waterFar:[142,172,205],   waterDeep:[108,142,178],
+      waterSurf:[208,225,238],   waterAlt:[218,205,182],
+      shimmerHue:[228,215,182],
+      // ★ 6色流动色带：在主色基调上注入更多色彩
+      flowColors:[[195,175,210],[210,195,165],[175,200,218],[220,205,190],[200,180,200],[185,210,205]],
+      // ★ 7色彩色光点：赤·橙·黄·绿·青·蓝·紫的淡彩版
+      colorDots:[[220,170,160],[225,195,155],[225,215,165],[175,215,170],[160,205,210],[165,180,220],[195,170,215]],
+      // ★ 7色彩虹微注：极淡的矿物色彩渗透
+      rainbowTint:[[230,185,175],[235,205,170],[240,225,180],[185,230,185],[175,225,225],[180,195,235],[205,180,225]],
+      mountainNear:[190,205,222],mountainMid:[175,192,215],
+      mountainFar:[158,178,202],mountainBack:[140,160,188],
+      skyTop:[244,248,252], skyBot:[232,242,250],
+      caustic:[205,222,238], sparkle:[228,238,248],
+      particle:[192,208,228], petal:[215,205,185],
+      glow:[222,235,248] },
+
+    // ═════════ 木 · 青墨 ═════════
+    { name:'青墨', char:'木', element:'Wood', accent:'#7BA898',
+      // 青绿 → 碧蓝，翡翠深潭
+      waterNear:[172,218,198],   waterMid:[148,198,182],
+      waterFar:[122,175,165],   waterDeep:[88,148,138],
+      waterSurf:[192,228,212],   waterAlt:[138,182,198],
+      shimmerHue:[188,228,205],
+      flowColors:[[155,195,175],[130,180,200],[175,200,155],[165,185,195],[145,190,180],[180,195,200]],
+      colorDots:[[215,175,165],[220,195,155],[218,210,160],[150,218,155],[145,210,210],[155,175,215],[195,168,208]],
+      rainbowTint:[[225,190,180],[230,205,170],[235,220,175],[165,230,170],[158,222,222],[168,188,228],[205,182,220]],
+      mountainNear:[168,208,192],mountainMid:[152,192,178],
+      mountainFar:[135,178,165],mountainBack:[118,160,148],
+      skyTop:[238,246,242], skyBot:[225,238,232],
+      caustic:[162,212,192], sparkle:[192,230,215],
+      particle:[148,205,182], petal:[178,210,172],
+      glow:[205,232,218] },
+
+    // ═════════ 水 · 澄碧 ═════════
+    { name:'澄碧', char:'水', element:'Water', accent:'#6CAABF',
+      // 湖蓝 → 紫罗兰，冰湖深处紫意
+      waterNear:[178,208,228],   waterMid:[152,188,218],
+      waterFar:[125,165,202],   waterDeep:[92,138,178],
+      waterSurf:[198,222,238],   waterAlt:[178,168,198],
+      shimmerHue:[192,218,238],
+      flowColors:[[170,160,200],[185,200,220],[160,185,210],[195,175,195],[180,168,215],[172,195,208]],
+      colorDots:[[218,172,165],[222,190,155],[215,208,162],[158,208,160],[150,200,208],[160,175,218],[200,170,210]],
+      rainbowTint:[[228,188,178],[232,200,168],[238,218,172],[170,225,172],[162,218,218],[175,188,232],[210,185,222]],
+      mountainNear:[182,208,232],mountainMid:[165,192,222],
+      mountainFar:[148,175,210],mountainBack:[128,158,195],
+      skyTop:[240,245,252], skyBot:[225,238,250],
+      caustic:[188,218,242], sparkle:[215,232,248],
+      particle:[178,205,232], petal:[192,180,210],
+      glow:[208,228,248] },
+
+    // ═════════ 火 · 烟霞 ═════════
+    { name:'烟霞', char:'火', element:'Fire', accent:'#B8989E',
+      // 烟粉 → 暖米，晨雾朝霞
+      waterNear:[222,205,210],   waterMid:[202,185,195],
+      waterFar:[178,162,175],   waterDeep:[148,132,148],
+      waterSurf:[232,218,225],   waterAlt:[208,195,170],
+      shimmerHue:[228,205,188],
+      flowColors:[[210,180,160],[195,175,195],[220,195,175],[185,165,180],[225,185,165],[192,180,192]],
+      colorDots:[[228,165,158],[230,185,150],[225,205,160],[165,210,168],[155,200,205],[168,178,218],[205,165,208]],
+      rainbowTint:[[238,182,175],[240,198,165],[242,218,175],[178,222,178],[168,215,215],[180,190,228],[215,180,220]],
+      mountainNear:[215,205,215],mountainMid:[198,188,200],
+      mountainFar:[180,168,182],mountainBack:[158,145,165],
+      skyTop:[248,244,246], skyBot:[238,230,236],
+      caustic:[228,215,225], sparkle:[240,232,240],
+      particle:[218,202,215], petal:[225,198,172],
+      glow:[240,230,238] },
+
+    // ═════════ 土 · 蜜金 ═════════
+    { name:'蜜金', char:'土', element:'Earth', accent:'#B5A882',
+      // 琥珀金 → 青绿，秋阳芦苇
+      waterNear:[225,215,192],   waterMid:[205,192,168],
+      waterFar:[182,168,140],   waterDeep:[148,135,105],
+      waterSurf:[235,225,205],   waterAlt:[155,188,172],
+      shimmerHue:[228,218,178],
+      flowColors:[[195,185,160],[165,185,170],[210,195,160],[175,170,150],[200,178,165],[185,190,175]],
+      colorDots:[[228,178,162],[232,198,152],[230,215,158],[158,215,162],[148,208,205],[162,180,218],[200,175,210]],
+      rainbowTint:[[238,195,180],[240,210,165],[245,225,172],[170,228,170],[160,220,218],[175,192,232],[210,188,222]],
+      mountainNear:[218,210,195],mountainMid:[202,194,178],
+      mountainFar:[185,175,158],mountainBack:[165,155,135],
+      skyTop:[250,248,242], skyBot:[242,238,225],
+      caustic:[235,225,205], sparkle:[245,238,222],
+      particle:[225,212,190], petal:[172,195,175],
+      glow:[245,235,215] },
+  ];
+
+  // 获取当前插值后的五色配色
+  function getWuseColor() {
+    var from = WUSE_COLORS[WUSE_IDX];
+    var t = WUSE_TRANSITION;
+    if (t <= 0) return from;
+    var to = WUSE_COLORS[WUSE_TARGET];
+    function lerpArr(a, b, t) { return a.map(function(v,i){ return v + (b[i]-v)*t; }); }
+    function lerpArr2d(a, b, t) { return a.map(function(v,i){ return lerpArr(v, b[i], t); }); }
+    var result = {
+      name: t >= 0.5 ? to.name : from.name,
+      char: t >= 0.5 ? to.char : from.char,
+      element: t >= 0.5 ? to.element : from.element,
+      accent: t >= 0.5 ? to.accent : from.accent,
+      // 水面近中远
+      waterNear: lerpArr(from.waterNear, to.waterNear, t),
+      waterMid: lerpArr(from.waterMid, to.waterMid, t),
+      waterFar: lerpArr(from.waterFar, to.waterFar, t),
+      waterDeep: lerpArr(from.waterDeep, to.waterDeep, t),
+      waterSurf: lerpArr(from.waterSurf, to.waterSurf, t),
+      waterAlt: lerpArr(from.waterAlt || from.waterDeep, to.waterAlt || to.waterDeep, t),
+      shimmerHue: lerpArr(from.shimmerHue || from.sparkle, to.shimmerHue || to.sparkle, t),
+      // 流动色带与彩色光点与彩虹微注
+      flowColors: lerpArr2d(from.flowColors || [from.waterMid, from.waterAlt, from.waterSurf, from.waterFar, from.waterMid, from.waterAlt],
+                            to.flowColors || [to.waterMid, to.waterAlt, to.waterSurf, to.waterFar, to.waterMid, to.waterAlt], t),
+      colorDots: lerpArr2d(from.colorDots || [from.sparkle, from.petal, from.caustic, from.waterAlt, from.glow, from.waterSurf, from.waterMid],
+                           to.colorDots || [to.sparkle, to.petal, to.caustic, to.waterAlt, to.glow, to.waterSurf, to.waterMid], t),
+      rainbowTint: lerpArr2d(from.rainbowTint || [from.sparkle, from.petal, from.caustic, from.waterAlt, from.glow, from.waterSurf, from.waterMid],
+                             to.rainbowTint || [to.sparkle, to.petal, to.caustic, to.waterAlt, to.glow, to.waterSurf, to.waterMid], t),
+      // 山体近中远背
+      mountainNear: lerpArr(from.mountainNear, to.mountainNear, t),
+      mountainMid: lerpArr(from.mountainMid, to.mountainMid, t),
+      mountainFar: lerpArr(from.mountainFar, to.mountainFar, t),
+      mountainBack: lerpArr(from.mountainBack, to.mountainBack, t),
+      // 天空
+      skyTop: lerpArr(from.skyTop, to.skyTop, t),
+      skyBot: lerpArr(from.skyBot, to.skyBot, t),
+      // 其他效果色
+      caustic: lerpArr(from.caustic, to.caustic, t),
+      sparkle: lerpArr(from.sparkle, to.sparkle, t),
+      particle: lerpArr(from.particle, to.particle, t),
+      petal: lerpArr(from.petal, to.petal, t),
+      glow: lerpArr(from.glow, to.glow, t),
+    };
+    return result;
+  }
+
+  function switchWuse(idx) {
+    if (idx < 0) idx = 4;
+    if (idx > 4) idx = 0;
+    if (idx === WUSE_IDX && WUSE_TRANSITION <= 0) return;
+    WUSE_TARGET = idx;
+    WUSE_TRANSITION = 0;
+    // 更新指示器
+    updateWuseIndicator(idx);
+  }
+
+  function updateWuseIndicator(idx) {
+    var dots = document.getElementById('wuseDots');
+    var label = document.getElementById('wuseLabel');
+    if (!dots || !label) return;
+    var colors = WUSE_COLORS;
+    dots.innerHTML = '';
+    for (var i = 0; i < 5; i++) {
+      var dot = document.createElement('div');
+      dot.className = 'wuse-dot' + (i === idx ? ' active' : '');
+      var c = colors[i].waterMid;
+      dot.style.background = 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+',0.6)';
+      dot.style.color = 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+',0.8)';
+      // ★ 点击圆点切换对应颜色
+      dot.onclick = (function(i){ return function(e){ e.stopPropagation(); switchWuse(i); }; })(i);
+      dots.appendChild(dot);
+    }
+    label.textContent = colors[idx].char + ' · ' + colors[idx].name;
+    label.style.color = colors[idx].accent;
+  }
+
+  // 五色弹窗逻辑
+  document.getElementById('wuseYes').addEventListener('click', function() {
+    WUSE_MODE = true;
+    document.getElementById('wuseDialog').classList.add('hidden');
+    document.getElementById('wuseGuide').classList.remove('hidden');
+    document.getElementById('wuseIndicator').classList.remove('hidden');
+    updateWuseIndicator(WUSE_IDX);
+    // 启动古乐
+    startWuseMusic();
+    // 5秒后隐藏手势提示
+    setTimeout(function(){
+      var g = document.getElementById('wuseGuide');
+      if (g) g.classList.add('hidden');
+    }, 6000);
+    // 通知父框架音乐切换
+    try { parent.postMessage({type:'wuseEnabled', value:true}, '*'); } catch(e) {}
+  });
+  document.getElementById('wuseNo').addEventListener('click', function() {
+    document.getElementById('wuseDialog').classList.add('hidden');
+  });
+
+  // 键盘控制五色（保留作为辅助）
+  window.addEventListener('keydown', function(e) {
+    if (!WUSE_MODE) return;
+    if (e.key >= '1' && e.key <= '5') { switchWuse(parseInt(e.key) - 1); }
+  });
+
+  // 监听父窗口消息（场景切换时停止音乐）
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'wuseEnabled' && e.data.value === false) {
+      stopWuseMusic();
+    }
+  });
+
+  // 滑动手势控制五色
+  window.addEventListener('touchstart', function(e) {
+    if (!WUSE_MODE) return;
+    WUSE_SWIPE_START = e.touches[0].clientX;
+  });
+  window.addEventListener('touchend', function(e) {
+    if (!WUSE_MODE || WUSE_SWIPE_START === null) return;
+    var dx = e.changedTouches[0].clientX - WUSE_SWIPE_START;
+    if (Math.abs(dx) > 50) { switchWuse(WUSE_IDX + (dx < 0 ? 1 : -1)); }
+    WUSE_SWIPE_START = null;
+  });
+  // 鼠标拖拽切换（按住拖动）
+  var _dragStart = null;
+  window.addEventListener('mousedown', function(e) {
+    if (!WUSE_MODE) return;
+    _dragStart = e.clientX;
+  });
+  window.addEventListener('mouseup', function(e) {
+    if (!WUSE_MODE || _dragStart === null) return;
+    var dx = e.clientX - _dragStart;
+    if (Math.abs(dx) > 80) { switchWuse(WUSE_IDX + (dx < 0 ? 1 : -1)); }
+    _dragStart = null;
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  //  音乐律动系统
+  // ═══════════════════════════════════════════════════════════
+  var _musicBeat = 0;
+  var _musicFreq = 261.63;
+  var _musicNoteIdx = 0;
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'musicBeat') {
+      _musicBeat = 1.0;
+      _musicFreq = e.data.frequency || 261.63;
+      _musicNoteIdx = e.data.noteIndex || 0;
+    }
+  });
+  function _noteNorm() { return _musicNoteIdx / 4; }
+
+  // ═══════════════════════════════════════════════════════════
+  //  ★ 古乐系统——古琴/古筝风格（五色模式专用）
+  // ═══════════════════════════════════════════════════════════
+  var _wuseAudioCtx = null;
+  var _wusePlaying = false;
+  var _wuseMelodyIdx = 0;
+  var _wuseLastNoteTime = 0;
+
+  // ★ 古琴旋律——五声宫调式，疏朗留白，高山流水之意
+  // 音程: 0=宫 2=商 4=角 5=徵 7=羽, -1=休止, 负数=低八度, >7=高八度
+  var WUSE_MELODY = [
+    0, -1, 2, 4, -1, 5, 4, 2, -1, -1,
+    0, 4, 7, 5, -1, 4, 2, 0, -1, -1,
+    2, 5, 7, 9, -1, 7, 5, 4, -1, 2,
+    0, -1, -1, 0, 2, 4, 5, -1, 7, 5,
+    4, 2, 0, -1, -1, -5, 0, 2, -1, 4,
+    5, 7, 5, 4, -1, 2, 0, -1, -1
+  ];
+  // 五声音阶频率：C D E G A，低中高三个八度
+  var WUSE_PENTA = [
+    65.41, 73.42, 82.41, 98.00, 110.00,  // 低八度
+    130.81, 146.83, 164.81, 196.00, 220.00, // 中八度
+    261.63, 293.66, 329.63, 392.00, 440.00  // 高八度
+  ];
+
+  function startWuseMusic() {
+    if (_wusePlaying) return;
+    _wusePlaying = true;
+    _wuseMelodyIdx = 0;
+    _wuseLastNoteTime = 0;
+    try { _wuseAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
+    playGuqinNote();
+  }
+
+  function stopWuseMusic() {
+    _wusePlaying = false;
+    if (_wuseAudioCtx) { try { _wuseAudioCtx.close(); } catch(e) {} _wuseAudioCtx = null; }
+  }
+
+  // ★ 古琴音色合成：拨弦+泛音+余韵
+  function playGuqinNote() {
+    if (!_wusePlaying || !_wuseAudioCtx) return;
+    var ni = WUSE_MELODY[_wuseMelodyIdx % WUSE_MELODY.length];
+    _wuseMelodyIdx++;
+
+    if (ni === -1) {
+      // 休止符——古琴讲究留白
+      var restDur = 600 + Math.random() * 400;
+      setTimeout(playGuqinNote, restDur);
+      return;
+    }
+
+    // 将音程序号映射到频率
+    // ni范围: -7到14，映射到三个八度
+    var idx;
+    if (ni < 0) {
+      idx = Math.max(0, 5 + ni); // 低八度
+    } else if (ni < 5) {
+      idx = 5 + ni; // 中八度
+    } else {
+      idx = 10 + (ni - 5); // 高八度
+    }
+    idx = Math.max(0, Math.min(WUSE_PENTA.length - 1, idx));
+    var freq = WUSE_PENTA[idx];
+    var now = _wuseAudioCtx.currentTime;
+
+    // ★ 古琴拨弦音色：基频 + 丰富泛音 + 快速衰减 + 长余韵
+    // 泛音系列：基频(1x), 八度(2x), 十二度(3x), 双八度(4x), 两八度+大三度(5x)
+    var harmonics = [
+      { ratio: 1,   amp: 0.12,  type: 'triangle' },  // 基频——圆厚
+      { ratio: 2,   amp: 0.06,  type: 'sine' },       // 八度——清亮
+      { ratio: 3,   amp: 0.03,  type: 'sine' },       // 十二度——空灵
+      { ratio: 4,   amp: 0.015, type: 'sine' },       // 双八度——远韵
+      { ratio: 5,   amp: 0.008, type: 'sine' },       // 更高泛音
+    ];
+
+    for (var h = 0; h < harmonics.length; h++) {
+      var hh = harmonics[h];
+      var osc = _wuseAudioCtx.createOscillator();
+      osc.type = hh.type;
+      osc.frequency.value = freq * hh.ratio;
+
+      var gain = _wuseAudioCtx.createGain();
+      // ★ 古琴包络：极快起振 → 急衰减 → 长余韵
+      // 拨弦瞬间
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(hh.amp, now + 0.008);     // 8ms 拨弦
+      gain.gain.exponentialRampToValueAtTime(hh.amp * 0.3, now + 0.15);  // 150ms 快衰减
+      gain.gain.exponentialRampToValueAtTime(hh.amp * 0.08, now + 0.8);  // 800ms 中衰减
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 3.0);          // 3s 长余韵
+
+      osc.connect(gain); gain.connect(_wuseAudioCtx.destination);
+      osc.start(now); osc.stop(now + 3.2);
+    }
+
+    // ★ 低音衬底——深沉的宫音，如山间回响
+    var bassOsc = _wuseAudioCtx.createOscillator();
+    bassOsc.type = 'sine';
+    bassOsc.frequency.value = freq * 0.5;
+    var bassGain = _wuseAudioCtx.createGain();
+    bassGain.gain.setValueAtTime(0, now);
+    bassGain.gain.linearRampToValueAtTime(0.04, now + 0.02);
+    bassGain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+    bassOsc.connect(bassGain); bassGain.connect(_wuseAudioCtx.destination);
+    bassOsc.start(now); bassOsc.stop(now + 2.7);
+
+    // ★ 微颤音（吟猱）——古琴特有技法，在余韵中轻揉弦
+    var vibOsc = _wuseAudioCtx.createOscillator();
+    vibOsc.type = 'sine';
+    vibOsc.frequency.value = freq;
+    var vibGain = _wuseAudioCtx.createGain();
+    vibGain.gain.setValueAtTime(0, now);
+    vibGain.gain.linearRampToValueAtTime(0.025, now + 0.5);    // 延迟出现
+    vibGain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+    // 颤音LFO
+    var lfo = _wuseAudioCtx.createOscillator();
+    lfo.type = 'sine'; lfo.frequency.value = 5.5; // 5.5Hz 颤音
+    var lfoGain = _wuseAudioCtx.createGain();
+    lfoGain.gain.value = 2.5; // 颤音深度 ±2.5Hz
+    lfo.connect(lfoGain); lfoGain.connect(vibOsc.frequency);
+    vibOsc.connect(vibGain); vibGain.connect(_wuseAudioCtx.destination);
+    vibOsc.start(now + 0.3); vibOsc.stop(now + 2.7);
+    lfo.start(now + 0.3); lfo.stop(now + 2.7);
+
+    // ★ 节拍——古琴不拘节拍，疏密有致
+    var tempo;
+    if (ni < 0) {
+      tempo = 800; // 休止后稍慢
+    } else if (ni >= 7) {
+      tempo = 1200 + Math.random() * 600; // 高音留白更久
+    } else {
+      tempo = 700 + Math.random() * 500; // 中低音稍密
+    }
+    // 偶尔加长停顿，如抚琴沉思
+    if (Math.random() < 0.15) tempo += 800;
+    setTimeout(playGuqinNote, tempo);
+  }
+
+  // 监听五色开启事件，启动古乐
+  window.addEventListener('wuseMusicStart', function() { startWuseMusic(); });
+  window.addEventListener('wuseMusicStop', function() { stopWuseMusic(); });
+  // 页面卸载时停止音乐，防止资源泄漏
+  window.addEventListener('beforeunload', function() { stopWuseMusic(); });
+
+  // ═══════════════════════════════════════════════════════════
+  //  昆仑瑶池 · 色彩体系
+  // ═══════════════════════════════════════════════════════════
+  var COLORS = {
+    paper:      [245, 240, 232],
+    cloudWhite: [240, 239, 232],
+    lightCyan:  [168, 216, 208],
+    smokyPrpl:  [184, 168, 200],
+    skyWater:   [126, 200, 192],
+    peachRed:   [232, 160, 160],
+    gilded:     [212, 168, 75],
+    agarwood:   [139, 107, 74],
+    mistWhite:  [245, 243, 238],
+    jadeDeep:   [40,  105, 100],
+    jadeMid:    [60,  140, 132],
+    jadeLit:    [100, 180, 170],
+    jadeSurf:   [145, 210, 200],
+    kunlunRock: [155, 145, 130],
+    celestial:  [220, 235, 225],
+  };
+
+  function rgba(rgb, a) { return 'rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+','+a+')'; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  // ═══════════════════════════════════════════════════════════
+  //  昆仑仙山 · 分层配置
+  // ═══════════════════════════════════════════════════════════
+  var MOUNTAIN_LAYERS = [
+    { name:'远景云峦', baseYRatio:0.30,
+      amplitudes:[28,18,10,6], frequencies:[0.0006,0.0015,0.0035,0.007],
+      phaseOffsets:[0.3,1.8,3.1,5.2],
+      topColor:[205,222,218], botColor:[188,210,206], lineColor:[170,195,190],
+      opacity:0.42, parallax:0.045, breatheAmp:8, lineWidth:0.8 },
+    { name:'远山', baseYRatio:0.38,
+      amplitudes:[48,28,14,8], frequencies:[0.0008,0.0022,0.0045,0.008],
+      phaseOffsets:[0.8,2.5,4.2,6.0],
+      topColor:[185,208,200], botColor:[162,190,182], lineColor:[145,175,168],
+      opacity:0.55, parallax:0.035, breatheAmp:10, lineWidth:0.9 },
+    { name:'中景仙山', baseYRatio:0.49,
+      amplitudes:[68,38,20,12], frequencies:[0.0010,0.0028,0.0055,0.009],
+      phaseOffsets:[0.2,3.0,5.0,7.0],
+      topColor:[172,198,188], botColor:[145,175,168], lineColor:[128,158,152],
+      opacity:0.65, parallax:0.025, breatheAmp:12, lineWidth:1.0 },
+    { name:'近岸仙山', baseYRatio:0.61,
+      amplitudes:[85,50,28,16], frequencies:[0.0012,0.0032,0.0060,0.0095],
+      phaseOffsets:[1.2,3.8,5.8,7.5],
+      topColor:[160,188,176], botColor:[132,162,155], lineColor:[115,145,140],
+      opacity:0.75, parallax:0.015, breatheAmp:14, lineWidth:1.1 },
+  ];
+
+  // ═══════════════════════════════════════════════════════════
+  //  绘制函数
+  // ═══════════════════════════════════════════════════════════
+
+  function mountainHeight(x, layer, time, breathe, px) {
+    var wx = x + px, h = 0;
+    for (var i = 0; i < layer.amplitudes.length; i++)
+      h += Math.sin(wx * layer.frequencies[i] + layer.phaseOffsets[i] + time * 0.00008 * (i + 1)) * layer.amplitudes[i];
+    var nx = wx * 0.015;
+    h += (Math.sin(nx) * Math.cos(nx * 1.7) * Math.sin(nx * 2.3)) * 8;
+    return h;
+  }
+
+  function generateNoiseTexture(canvas) {
+    var w = Math.ceil(canvas.width / 4), h = Math.ceil(canvas.height / 4);
+    var off = document.createElement('canvas'); off.width = w; off.height = h;
+    var octx = off.getContext('2d');
+    var imgData = octx.createImageData(w, h);
+    for (var i = 0; i < imgData.data.length; i += 4) {
+      var v = 235 + Math.random() * 20;
+      imgData.data[i] = v; imgData.data[i+1] = v - 2; imgData.data[i+2] = v - 6;
+      imgData.data[i+3] = Math.floor(Math.random() * 18);
+    }
+    octx.putImageData(imgData, 0, 0);
+    return off;
+  }
+
+  function drawNoiseBackground(ctx, noiseCanvas, W, H) {
+    ctx.fillStyle = rgba(COLORS.paper, 1); ctx.fillRect(0, 0, W, H);
+    if (noiseCanvas) { ctx.globalAlpha = 0.25; ctx.drawImage(noiseCanvas, 0, 0, W, H); ctx.globalAlpha = 1; }
+    var v = ctx.createRadialGradient(W/2, H/2, W*0.30, W/2, H/2, W*0.80);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(0.7, 'rgba(0,0,0,0.01)'); v.addColorStop(1, 'rgba(0,0,0,0.04)');
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawMountainLayer(ctx, layer, W, H, time, px, breathe, layerIdx) {
+    var baseY = layer.baseYRatio * H;
+    var peaks = [], contour = [];
+    for (var x = 0; x <= W; x += 2) {
+      var h = mountainHeight(x, layer, time, breathe, px);
+      peaks.push({ x: x, y: baseY - h });
+      contour.push({ x: x, y: baseY - h });
+    }
+
+    // ★ 五色模式：山体颜色联动（近中远背四层次）
+    var topColor = layer.topColor;
+    var botColor = layer.botColor;
+    var lineColor = layer.lineColor;
+    if (WUSE_MODE && typeof layerIdx === 'number') {
+      var wc = getWuseColor();
+      var mKeys = ['mountainBack','mountainFar','mountainMid','mountainNear'];
+      topColor = wc[mKeys[layerIdx]] || topColor;
+      botColor = topColor.map(function(v){ return v - 18; });
+      lineColor = topColor.map(function(v){ return v - 32; });
+    }
+
+    ctx.save(); ctx.globalAlpha = layer.opacity;
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (var i = 0; i < peaks.length; i++) ctx.lineTo(peaks[i].x, peaks[i].y);
+    ctx.lineTo(W, H); ctx.closePath();
+    var grad = ctx.createLinearGradient(0, baseY - layer.amplitudes[0] * 1.2, 0, H);
+    grad.addColorStop(0, rgba(topColor, 1));
+    grad.addColorStop(0.35, rgba(botColor, 0.9));
+    grad.addColorStop(1, rgba([botColor[0]-30, botColor[1]-25, botColor[2]-20], 0.7));
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.restore();
+
+    ctx.save(); ctx.globalAlpha = layer.opacity * 0.7;
+    ctx.strokeStyle = rgba(lineColor, 0.55); ctx.lineWidth = layer.lineWidth;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath();
+    var started = false;
+    for (var i = 0; i < contour.length; i++) { if (!started) { ctx.moveTo(contour[i].x, contour[i].y); started = true; } else ctx.lineTo(contour[i].x, contour[i].y); }
+    ctx.stroke();
+    ctx.strokeStyle = rgba(lineColor, 0.25); ctx.lineWidth = layer.lineWidth * 1.8; ctx.globalAlpha = layer.opacity * 0.35;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawCloudBand(ctx, W, H, yCenter, time, breathe) {
+    ctx.save();
+    var y = yCenter + Math.sin(time * 0.0002) * 6 + breathe * 0.4;
+    var count = 8;
+    for (var i = 0; i < count; i++) {
+      var cx = (W / count) * i + W / (count * 2) + Math.sin(time * 0.0003 + i) * 40;
+      var seed = i * 0.618;
+      var rx = 80 + ((Math.sin(seed * 7.3) * 0.5 + 0.5) * 100);
+      var ry = 18 + ((Math.cos(seed * 5.1) * 0.5 + 0.5) * 25);
+      var alpha = 0.04 + ((Math.sin(seed * 3.7) * 0.5 + 0.5) * 0.04);
+      var grad = ctx.createRadialGradient(cx, y, 0, cx, y, rx);
+      grad.addColorStop(0, rgba(COLORS.cloudWhite, alpha));
+      grad.addColorStop(0.5, rgba(COLORS.mistWhite, alpha * 0.5));
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad; ctx.beginPath(); ctx.ellipse(cx, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawCelestialLight(ctx, W, waterTop, waterBot, time) {
+    ctx.save();
+    var wc = WUSE_MODE ? getWuseColor() : null;
+    var cx = W * 0.5 + Math.sin(time * 0.00012) * W * 0.07;
+    var bw = W * 0.16;
+    var bAlpha = 0.065 + Math.sin(time * 0.0005) * 0.018;
+    // ★ 五色模式：天光颜色联动
+    var lightR = wc ? Math.round(wc.glow[0]) : 235;
+    var lightG = wc ? Math.round(wc.glow[1]) : 248;
+    var lightB = wc ? Math.round(wc.glow[2]) : 238;
+    var beam = ctx.createLinearGradient(cx - bw, 0, cx + bw, 0);
+    beam.addColorStop(0, 'rgba(255,255,248,0)');
+    beam.addColorStop(0.3, 'rgba('+lightR+','+lightG+','+lightB+',' + (bAlpha*0.45) + ')');
+    beam.addColorStop(0.48, 'rgba('+lightR+','+lightG+','+lightB+',' + bAlpha + ')');
+    beam.addColorStop(0.52, 'rgba('+lightR+','+lightG+','+lightB+',' + bAlpha + ')');
+    beam.addColorStop(0.7, 'rgba('+lightR+','+lightG+','+lightB+',' + (bAlpha*0.45) + ')');
+    beam.addColorStop(1, 'rgba(255,255,248,0)');
+    ctx.fillStyle = beam; ctx.fillRect(cx - bw, waterTop, bw * 2, waterBot - waterTop);
+    var surfGlow = ctx.createRadialGradient(cx, waterTop + 12, 0, cx, waterTop + 12, W * 0.24);
+    surfGlow.addColorStop(0, 'rgba('+lightR+','+lightG+','+lightB+',0.11)');
+    surfGlow.addColorStop(0.35, 'rgba('+lightR+','+lightG+','+lightB+',0.06)');
+    surfGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = surfGlow; ctx.fillRect(cx - W * 0.28, waterTop - 8, W * 0.56, 70);
+    ctx.restore();
+  }
+
+  function drawCaustics(ctx, W, waterTop, waterBot, time) {
+    var waterH = waterBot - waterTop; ctx.save();
+    var wc = WUSE_MODE ? getWuseColor() : null;
+    var cCol = wc ? wc.caustic : [200,255,235];
+    var cCol2 = wc ? [(cCol[0]*0.85)|0,(cCol[1]*0.9)|0,(cCol[2]*0.88)|0] : [175,238,218];
+    var cCol3 = wc ? [(cCol[0]*0.65)|0,(cCol[1]*0.78)|0,(cCol[2]*0.73)|0] : [130,200,188];
+    // ★ 五色副色焦散
+    var cAlt = wc ? (wc.waterAlt || wc.waterDeep) : null;
+    for (var i = 0; i < 55; i++) {
+      var seed = i * 7.389;
+      var wx1 = Math.sin(time * 0.0006 + seed * 0.33) * 0.5 + 0.5;
+      var wx2 = Math.cos(time * 0.0009 + seed * 0.71) * 0.5 + 0.5;
+      var wy1 = Math.sin(time * 0.0007 + seed * 0.52) * 0.5 + 0.5;
+      var wy2 = Math.cos(time * 0.0008 + seed * 1.13) * 0.5 + 0.5;
+      var x = (wx1 * 0.6 + wx2 * 0.4) * W;
+      var y = waterTop + 18 + (wy1 * 0.55 + wy2 * 0.45) * (waterH - 40);
+      var depthFade = 1 - (y - waterTop) / waterH * 0.55;
+      var interf = Math.abs(Math.sin(time * 0.0012 + seed * 0.8 + wx1 * 6.3) + Math.cos(time * 0.0009 + seed * 1.2 + wy1 * 5.1));
+      var bright = interf * 0.5;
+      if (bright < 0.28) continue;
+      var alpha = bright * 0.14 * depthFade;
+      var size = 3 + bright * 20;
+      // ★ 每隔3个焦散用副色
+      var useAlt = cAlt && (i % 3 === 0);
+      var cc1 = useAlt ? cAlt : cCol;
+      var cc2 = useAlt ? [(cAlt[0]*0.85)|0,(cAlt[1]*0.9)|0,(cAlt[2]*0.88)|0] : cCol2;
+      var cc3 = useAlt ? [(cAlt[0]*0.65)|0,(cAlt[1]*0.78)|0,(cAlt[2]*0.73)|0] : cCol3;
+      var glow = ctx.createRadialGradient(x, y, 0, x, y, size);
+      glow.addColorStop(0, 'rgba('+Math.round(cc1[0])+','+Math.round(cc1[1])+','+Math.round(cc1[2])+',' + alpha + ')');
+      glow.addColorStop(0.18, 'rgba('+Math.round(cc2[0])+','+Math.round(cc2[1])+','+Math.round(cc2[2])+',' + (alpha*0.7) + ')');
+      glow.addColorStop(0.5, 'rgba('+Math.round(cc3[0])+','+Math.round(cc3[1])+','+Math.round(cc3[2])+',' + (alpha*0.28) + ')');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+      if (bright > 0.48) {
+        var tLen = size * (1.5 + bright);
+        var tAng = time * 0.0003 + seed * 2.7;
+        var ex = x + Math.cos(tAng) * tLen, ey = y + Math.sin(tAng) * tLen;
+        ctx.strokeStyle = 'rgba('+Math.round(cc2[0])+','+Math.round(cc2[1])+','+Math.round(cc2[2])+',' + (alpha*0.45) + ')';
+        ctx.lineWidth = 0.8 + bright * 2; ctx.lineCap = 'round'; ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo((x+ex)/2+Math.cos(tAng+1.5)*tLen*0.3,(y+ey)/2+Math.sin(tAng+1.5)*tLen*0.3,ex,ey);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawWaves(ctx, W, waterTop, waterBot, time, breathe) {
+    var waterH = waterBot - waterTop; ctx.save();
+    var bp = _musicBeat;
+    var wc = WUSE_MODE ? getWuseColor() : null;
+    var waveColor = wc ? wc.waterSurf : [170,225,215];
+    // ★ 五色模式副色波纹与彩色波纹
+    var waveAlt = wc ? (wc.waterAlt || wc.waterDeep) : null;
+    // ★ 五色模式：使用flowColors增加波纹色彩变化
+    var waveExtra = wc && wc.flowColors ? wc.flowColors : null;
+    for (var row = 0; row < 24; row++) {
+      var baseY = waterTop + 2 + row * (waterH / 25);
+      var depthFade = 1 - row / 28; if (depthFade <= 0) continue;
+      var alpha = 0.05 * depthFade + bp * 0.02 * depthFade;
+      // ★ 五色模式：每隔3行使用flowColors或colorDots中的颜色
+      var rowColor = waveColor;
+      if (waveExtra && row % 3 === 2) {
+        rowColor = waveExtra[row % waveExtra.length];
+      } else if (wc && wc.colorDots && row % 5 === 4) {
+        // 每5行使用一个colorDot颜色
+        rowColor = wc.colorDots[row % wc.colorDots.length];
+      } else if (waveAlt && row % 4 === 0) {
+        rowColor = waveAlt;
+      }
+      ctx.strokeStyle = 'rgba('+rowColor[0]+','+rowColor[1]+','+rowColor[2]+',' + (alpha*0.6) + ')'; ctx.lineWidth = 0.4 + bp * 0.2;
+      ctx.beginPath();
+      for (var x = 0; x <= W; x += 4) {
+        // ★ 音乐律动：节拍时波纹振幅增大
+        var beatAmp = 1 + bp * 0.6;
+        var wy = baseY + Math.sin(x*0.014+time*0.0008+row*0.35)*4.5*beatAmp
+                  + Math.sin(x*0.027+time*0.0011+row*0.7)*2.8*beatAmp
+                  + Math.sin(x*0.006+time*0.0005+row*1.2)*3.2*beatAmp
+                  + Math.cos(x*0.033+time*0.0014+row*0.55)*1.6*beatAmp
+                  + breathe*0.12;
+        if (x === 0) ctx.moveTo(x, wy); else ctx.lineTo(x, wy);
+      }
+      ctx.stroke();
+      if (row % 3 === 0) {
+        ctx.strokeStyle = 'rgba('+waveColor[0]+','+waveColor[1]+','+waveColor[2]+',' + (alpha*0.35 + bp*0.01) + ')'; ctx.lineWidth = 0.25 + bp * 0.1;
+        ctx.beginPath();
+        for (var x = 0; x <= W; x += 7) {
+          var wy = baseY + Math.sin(x*0.019-time*0.0007+row*0.6)*3.5*beatAmp
+                    + Math.cos(x*0.012+time*0.0009+row)*2.2*beatAmp
+                    + Math.sin(x*0.042+time*0.0013-row*0.4)*1.8*beatAmp;
+          if (x === 0) ctx.moveTo(x, wy); else ctx.lineTo(x, wy);
+        }
+        ctx.stroke();
+      }
+      // ★ 五色模式：副色波纹线（每隔4行加一条副色波纹）
+      if (waveAlt && row % 4 === 2) {
+        var altAlpha = alpha * 0.25;
+        ctx.strokeStyle = 'rgba('+waveAlt[0]+','+waveAlt[1]+','+waveAlt[2]+',' + altAlpha + ')'; ctx.lineWidth = 0.3;
+        ctx.beginPath();
+        for (var x = 0; x <= W; x += 6) {
+          var wy = baseY + Math.sin(x*0.016+time*0.0006+row*0.5)*3.0*beatAmp
+                    + Math.cos(x*0.025+time*0.001+row*0.8)*2.0*beatAmp;
+          if (x === 0) ctx.moveTo(x, wy); else ctx.lineTo(x, wy);
+        }
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawSpecularHighlights(ctx, W, waterTop, waterBot, time) {
+    var waterH = waterBot - waterTop; ctx.save();
+    var bp = _musicBeat;
+    var wc = WUSE_MODE ? getWuseColor() : null;
+    var hlColor = wc ? wc.waterSurf : [170,225,215];
+    for (var i = 0; i < 9; i++) {
+      var seed = i * 2.718;
+      var baseY = waterTop + 18 + (i / 9) * (waterH - 45);
+      var bandY = baseY + Math.sin(time * 0.0005 + seed) * 14;
+      var depthFade = 1 - (i / 9) * 0.6;
+      var patches = 5 + Math.floor(Math.abs(Math.sin(seed * 3.1)) * 5);
+      for (var j = 0; j < patches; j++) {
+        var px = (W * (j + 0.5)) / patches + Math.sin(time * 0.0007 + seed + j * 1.7) * W * 0.07;
+        // ★ 音乐律动：节拍时高光更亮
+        var bright = 0.25 + 0.75 * Math.abs(Math.sin(time * 0.001 + seed * 2.2 + j * 1.5)) + bp * 0.3;
+        var alpha = bright * 0.07 * depthFade + bp * 0.03 * depthFade;
+        var pw = 28 + bright * 65 + bp * 20, ph = 1.8 + bright * 4.5 + bp * 2;
+        var glow = ctx.createRadialGradient(px, bandY, 0, px, bandY, pw);
+        glow.addColorStop(0, 'rgba(255,255,250,' + alpha + ')');
+        glow.addColorStop(0.25, 'rgba('+hlColor[0]+','+hlColor[1]+','+hlColor[2]+',' + (alpha*0.35) + ')');
+        glow.addColorStop(0.6, 'rgba('+(hlColor[0]-20)+','+(hlColor[1]-15)+','+(hlColor[2]-10)+',' + (alpha*0.08) + ')');
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.ellipse(px, bandY, pw, ph, -0.04, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawWaterSparkles(ctx, W, waterTop, waterBot, time) {
+    ctx.save();
+    var waterH = waterBot - waterTop;
+    var wc = WUSE_MODE ? getWuseColor() : null;
+    var spColor = wc ? wc.sparkle : [228,238,232];
+    for (var i = 0; i < 26; i++) {
+      var sx = (W / 27) * (i + 1) + Math.sin(time * 0.0012 + i * 2.1) * 75;
+      var sy = waterTop + 22 + ((i * 61 + 19) % (waterH - 50));
+      var flicker = 0.4 + 0.6 * Math.sin(time * 0.0025 + i * 1.55);
+      var alpha = (0.04 + flicker * 0.10) * (1 - (sy - waterTop) / waterH);
+      var size = 0.8 + flicker * 2.2;
+      var glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, size * 3.5);
+      glow.addColorStop(0, 'rgba(255,255,252,' + alpha + ')');
+      glow.addColorStop(0.22, 'rgba('+spColor[0]+','+spColor[1]+','+spColor[2]+',' + (alpha*0.40) + ')');
+      glow.addColorStop(0.6, 'rgba('+(spColor[0]-25)+','+(spColor[1]-20)+','+(spColor[2]-15)+',' + (alpha*0.12) + ')');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow; ctx.fillRect(sx - size*4, sy - size*4, size*8, size*8);
+    }
+    ctx.restore();
+  }
+
+  function drawWater(ctx, W, H, waterTop, time, breathe) {
+    var waterBot = H * 0.87, waterH = waterBot - waterTop;
+    var bp = _musicBeat;
+    var brightBoost = bp * 12;
+
+    // ★ 五色模式：使用插值后的五色配色（近中远多层次渐变）
+    var wc = WUSE_MODE ? getWuseColor() : null;
+    var wf = wc ? wc.waterFar : [115,190,178];
+    var wm = wc ? wc.waterMid : [90,165,155];
+    var wn = wc ? wc.waterNear : [145,210,200];
+    var wd = wc ? wc.waterDeep : [35,100,95];
+    var ws = wc ? wc.waterSurf : [170,225,215];
+
+    var grad = ctx.createLinearGradient(0, waterTop, 0, waterBot);
+    // 画面上方 = 远处深水
+    grad.addColorStop(0,    rgba([Math.round(ws[0]+brightBoost), Math.round(ws[1]+brightBoost), Math.round(ws[2]+brightBoost)], 0.82));
+    grad.addColorStop(0.08, rgba([Math.round(wf[0]+brightBoost), Math.round(wf[1]+brightBoost), Math.round(wf[2]+brightBoost)], 0.78));
+    grad.addColorStop(0.22, rgba([Math.round(wm[0]+brightBoost*0.7), Math.round(wm[1]+brightBoost*0.7), Math.round(wm[2]+brightBoost*0.7)], 0.70));
+    grad.addColorStop(0.45, rgba([Math.round(wn[0]+brightBoost*0.4), Math.round(wn[1]+brightBoost*0.4), Math.round(wn[2]+brightBoost*0.4)], 0.58));
+    grad.addColorStop(0.70, rgba([Math.round(wd[0]+brightBoost*0.2), Math.round(wd[1]+brightBoost*0.2), Math.round(wd[2]+brightBoost*0.2)], 0.40));
+    grad.addColorStop(1,    rgba([Math.round(wd[0]*0.6), Math.round(wd[1]*0.7), Math.round(wd[2]*0.7)], 0.24));
+    ctx.fillStyle = grad; ctx.fillRect(0, waterTop, W, waterH);
+
+    drawCelestialLight(ctx, W, waterTop, waterBot, time);
+
+    ctx.save();
+    // ★ 岸边光晕——使用五色颜色，大幅降低透明度
+    var shoreGlow = ctx.createLinearGradient(0, waterTop - 14, 0, waterTop + 55);
+    var sgColor = wc ? wc.waterSurf : [170,225,215];
+    shoreGlow.addColorStop(0, 'rgba('+sgColor[0]+','+sgColor[1]+','+sgColor[2]+',0)');
+    shoreGlow.addColorStop(0.25, 'rgba('+(sgColor[0]-20)+','+(sgColor[1]-15)+','+(sgColor[2]-10)+',0.08)');
+    shoreGlow.addColorStop(0.55, 'rgba('+(sgColor[0]-40)+','+(sgColor[1]-30)+','+(sgColor[2]-20)+',0.04)');
+    shoreGlow.addColorStop(1, 'rgba('+(sgColor[0]-60)+','+(sgColor[1]-45)+','+(sgColor[2]-35)+',0)');
+    ctx.fillStyle = shoreGlow; ctx.fillRect(0, waterTop - 14, W, 69);
+    ctx.restore();
+
+    drawCausticsEnhanced(ctx, W, waterTop, waterBot, time);
+    drawWaves(ctx, W, waterTop, waterBot, time, breathe);
+    drawFlowBands(ctx, W, waterTop, waterBot, time);
+    drawColorDots(ctx, W, waterTop, waterBot, time);
+    drawSpecularHighlights(ctx, W, waterTop, waterBot, time);
+
+    // ★ 五色池渐变叠加——主色→副色横向渐变 + 彩虹色注入
+    if (wc && wc.waterAlt) {
+      ctx.save();
+      var altC = wc.waterAlt;
+      // 左侧偏主色，右侧偏副色，形成自然色彩过渡
+      var hGrad = ctx.createLinearGradient(0, waterTop, W, waterBot);
+      hGrad.addColorStop(0, 'rgba('+Math.round(wm[0])+','+Math.round(wm[1])+','+Math.round(wm[2])+',0.15)');
+      hGrad.addColorStop(0.15, 'rgba('+Math.round(altC[0])+','+Math.round(altC[1])+','+Math.round(altC[2])+',0.08)');
+      hGrad.addColorStop(0.35, 'rgba('+Math.round(wm[0])+','+Math.round(wm[1])+','+Math.round(wm[2])+',0.05)');
+      hGrad.addColorStop(0.55, 'rgba('+Math.round(altC[0])+','+Math.round(altC[1])+','+Math.round(altC[2])+',0.10)');
+      hGrad.addColorStop(0.75, 'rgba('+Math.round(wm[0])+','+Math.round(wm[1])+','+Math.round(wm[2])+',0.06)');
+      hGrad.addColorStop(1, 'rgba('+Math.round(wd[0])+','+Math.round(wd[1])+','+Math.round(wd[2])+',0.04)');
+      ctx.fillStyle = hGrad; ctx.fillRect(0, waterTop, W, waterH);
+
+      // ★ 彩虹色注入——在水面不同位置注入赤橙黄绿青蓝紫的极淡渐变
+      if (wc.rainbowTint) {
+        var rt = wc.rainbowTint;
+        for (var ri = 0; ri < rt.length; ri++) {
+          var rc = rt[ri];
+          // 每种彩虹色占据水面约1/7的横向区域，带缓慢流动偏移
+          var rx0 = W * (ri / rt.length) + Math.sin(time * 0.0002 + ri * 1.5) * W * 0.05;
+          var rx1 = W * ((ri + 1.5) / rt.length) + Math.sin(time * 0.0002 + ri * 1.5 + 1) * W * 0.05;
+          var ry0 = waterTop + waterH * 0.1;
+          var ry1 = waterBot;
+          var rGrad = ctx.createLinearGradient(rx0, ry0, rx1, ry1);
+          var rAlpha = 0.06 + 0.03 * Math.sin(time * 0.0004 + ri * 2.1);
+          rGrad.addColorStop(0, 'rgba(0,0,0,0)');
+          rGrad.addColorStop(0.15, 'rgba('+Math.round(rc[0])+','+Math.round(rc[1])+','+Math.round(rc[2])+','+(rAlpha*0.3)+')');
+          rGrad.addColorStop(0.35, 'rgba('+Math.round(rc[0])+','+Math.round(rc[1])+','+Math.round(rc[2])+','+rAlpha+')');
+          rGrad.addColorStop(0.5, 'rgba('+Math.round(rc[0]*0.9)+','+Math.round(rc[1]*0.9)+','+Math.round(rc[2]*0.9)+','+(rAlpha*0.7)+')');
+          rGrad.addColorStop(0.7, 'rgba('+Math.round(rc[0]*0.85)+','+Math.round(rc[1]*0.85)+','+Math.round(rc[2]*0.85)+','+(rAlpha*0.3)+')');
+          rGrad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = rGrad; ctx.fillRect(0, waterTop, W, waterH);
+        }
+      }
+
+      // 纵向深水渐变：深处渐变到副色
+      var dGrad = ctx.createLinearGradient(0, waterTop + waterH * 0.4, 0, waterBot);
+      dGrad.addColorStop(0, 'rgba(0,0,0,0)');
+      dGrad.addColorStop(0.3, 'rgba('+Math.round(altC[0])+','+Math.round(altC[1])+','+Math.round(altC[2])+',0.06)');
+      dGrad.addColorStop(0.6, 'rgba('+Math.round(altC[0])+','+Math.round(altC[1])+','+Math.round(altC[2])+',0.10)');
+      dGrad.addColorStop(1, 'rgba('+Math.round(altC[0]*0.8)+','+Math.round(altC[1]*0.8)+','+Math.round(altC[2]*0.8)+',0.14)');
+      ctx.fillStyle = dGrad; ctx.fillRect(0, waterTop + waterH * 0.4, W, waterH * 0.6);
+      ctx.restore();
+    }
+
+    ctx.save(); ctx.globalAlpha = 0.04 + Math.sin(time * 0.0005) * 0.015;
+    var edgeColor = wc ? wc.waterSurf : [170,225,215];
+    ctx.strokeStyle = 'rgba('+edgeColor[0]+','+edgeColor[1]+','+edgeColor[2]+',0.45)'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (var x = 0; x <= W; x += 5) {
+      var edgeY = waterTop + Math.sin(x*0.022+time*0.0011)*2.2
+                  + Math.cos(x*0.035+time*0.0008)*1.5
+                  + Math.sin(x*0.009-time*0.0014)*3.5;
+      if (x === 0) ctx.moveTo(x, edgeY); else ctx.lineTo(x, edgeY);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba('+edgeColor[0]+','+edgeColor[1]+','+edgeColor[2]+',0.20)'; ctx.lineWidth = 0.5;
+    ctx.stroke(); ctx.restore();
+
+    ctx.save(); ctx.globalAlpha = 0.015;
+    var surfColor = wc ? wc.waterSurf : [170,225,215];
+    var surfOver = ctx.createLinearGradient(0, waterTop, 0, waterTop + waterH * 0.35);
+    surfOver.addColorStop(0, 'rgba('+surfColor[0]+','+surfColor[1]+','+surfColor[2]+',0.3)');
+    surfOver.addColorStop(0.5, 'rgba('+(surfColor[0]-20)+','+(surfColor[1]-15)+','+(surfColor[2]-10)+',0.08)');
+    surfOver.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = surfOver; ctx.fillRect(0, waterTop, W, waterH * 0.35);
+    ctx.restore();
+
+    ctx.save();
+    var mistGlow = ctx.createLinearGradient(0, waterTop, 0, waterTop + 80);
+    var mgColor = wc ? wc.glow : [218,232,222];
+    mistGlow.addColorStop(0, 'rgba('+mgColor[0]+','+mgColor[1]+','+mgColor[2]+',0.03)');
+    mistGlow.addColorStop(0.5, 'rgba('+mgColor[0]+','+mgColor[1]+','+mgColor[2]+',0.01)');
+    mistGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = mistGlow; ctx.fillRect(0, waterTop, W, 80);
+    ctx.restore();
+
+    // ★ 水面微雾层（极轻，仅增加一点层次感）
+    ctx.save();
+    var deepMist = ctx.createLinearGradient(0, waterTop + waterH * 0.7, 0, waterBot);
+    deepMist.addColorStop(0, 'rgba(0,0,0,0)');
+    deepMist.addColorStop(0.6, 'rgba(30,28,25,0.01)');
+    deepMist.addColorStop(1, 'rgba(30,28,25,0.02)');
+    ctx.fillStyle = deepMist; ctx.fillRect(0, waterTop + waterH * 0.7, W, waterH * 0.3);
+    ctx.restore();
+
+    drawWaterSparkles(ctx, W, waterTop, waterBot, time);
+
+    // ★ 五色池流光效果——色彩微移的梦幻光斑（使用flowColors、colorDots、rainbowTint增强色彩丰富度）
+    if (wc && wc.shimmerHue) {
+      ctx.save();
+      var sh = wc.shimmerHue;
+      var altC = wc.waterAlt || wc.waterDeep;
+      // ★ 收集所有可用色彩用于流光
+      var shimColors = [sh, altC, wc.waterSurf, wc.waterMid];
+      if (wc.flowColors) shimColors = shimColors.concat(wc.flowColors);
+      if (wc.colorDots) shimColors = shimColors.concat(wc.colorDots);
+      if (wc.rainbowTint) shimColors = shimColors.concat(wc.rainbowTint);
+      for (var si = 0; si < 20; si++) {
+        var seed = si * 3.14;
+        var sx = W * (0.03 + 0.94 * ((Math.sin(seed * 2.1) * 0.5 + 0.5)));
+        var drift = Math.sin(time * 0.00035 + seed) * W * 0.12;
+        sx += drift;
+        var sy = waterTop + waterH * (0.05 + 0.8 * ((Math.cos(seed * 1.7) * 0.5 + 0.5)));
+        var pulse = 0.25 + 0.75 * Math.abs(Math.sin(time * 0.0007 + seed * 2.3));
+        var sAlpha = 0.06 * pulse; // ★ 提高可见度 0.04→0.06
+        var sSize = 25 + pulse * 70 + Math.sin(time * 0.0005 + seed) * 20;
+        // ★ 每个流光光斑使用不同的色彩对，从shimColors中选取
+        var c1 = shimColors[si % shimColors.length];
+        var c2 = shimColors[(si + 3) % shimColors.length];
+        // 在两个色彩之间缓慢渐变
+        var mix = Math.sin(time * 0.0003 + seed * 1.5) * 0.5 + 0.5;
+        var sr = Math.round(c1[0] + (c2[0] - c1[0]) * mix);
+        var sg2 = Math.round(c1[1] + (c2[1] - c1[1]) * mix);
+        var sb = Math.round(c1[2] + (c2[2] - c1[2]) * mix);
+        var shimGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, sSize);
+        shimGrad.addColorStop(0, 'rgba('+sr+','+sg2+','+sb+',' + sAlpha + ')');
+        shimGrad.addColorStop(0.25, 'rgba('+sr+','+sg2+','+sb+',' + (sAlpha*0.65) + ')');
+        shimGrad.addColorStop(0.45, 'rgba('+Math.round(c1[0])+','+Math.round(c1[1])+','+Math.round(c1[2])+',' + (sAlpha*0.4) + ')');
+        shimGrad.addColorStop(0.65, 'rgba('+Math.round(c2[0])+','+Math.round(c2[1])+','+Math.round(c2[2])+',' + (sAlpha*0.2) + ')');
+        shimGrad.addColorStop(0.85, 'rgba('+Math.round(sr*0.8)+','+Math.round(sg2*0.8)+','+Math.round(sb*0.8)+',' + (sAlpha*0.06) + ')');
+        shimGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = shimGrad;
+        // ★ 椭圆形+缓慢旋转，模拟水波光斑
+        var angle = Math.sin(time * 0.0002 + seed) * 0.4;
+        ctx.beginPath(); ctx.ellipse(sx, sy, sSize, sSize * 0.4, angle, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawShoreRocks(ctx, W, H, shoreTop, time, breathe) {
+    ctx.save();
+    var rockPositions = [
+      {x:W*0.12, s:28},{x:W*0.25, s:18},{x:W*0.42, s:34},
+      {x:W*0.58, s:22},{x:W*0.73, s:30},{x:W*0.88, s:20},
+    ];
+    for (var i = 0; i < rockPositions.length; i++) {
+      var r = rockPositions[i];
+      var ry = shoreTop + Math.sin(time * 0.0003 + r.x * 0.01) * 3 + breathe * 0.1 + 3;
+      var glow = ctx.createRadialGradient(r.x, ry, r.s*0.1, r.x, ry, r.s*1.5);
+      glow.addColorStop(0, 'rgba(180,200,185,0.22)');
+      glow.addColorStop(0.6, 'rgba(160,175,160,0.08)');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow; ctx.fillRect(r.x - r.s*2, ry - r.s*2, r.s*4, r.s*4);
+      var stoneGrad = ctx.createRadialGradient(r.x - r.s*0.1, ry - r.s*0.25, r.s*0.05, r.x, ry, r.s*0.7);
+      stoneGrad.addColorStop(0, 'rgba(185,175,160,0.6)');
+      stoneGrad.addColorStop(0.6, 'rgba(155,145,130,0.35)');
+      stoneGrad.addColorStop(1, 'rgba(140,130,115,0)');
+      ctx.fillStyle = stoneGrad;
+      ctx.beginPath(); ctx.ellipse(r.x, ry, r.s*0.55, r.s*0.35, -0.2, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(220,215,200,0.25)';
+      ctx.beginPath(); ctx.ellipse(r.x - r.s*0.1, ry - r.s*0.12, r.s*0.18, r.s*0.1, -0.3, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawShore(ctx, W, H, waterBot, time, breathe) {
+    var shoreTop = waterBot;
+    ctx.save();
+    ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.moveTo(0, shoreTop);
+    for (var x = 0; x <= W; x += 3) {
+      var h = Math.sin(x*0.0018+1.5)*10+Math.sin(x*0.0045+2.8)*7
+            +Math.sin(x*0.011+4.1)*4+Math.sin(time*0.0003+x*0.003)*3+breathe*0.12;
+      ctx.lineTo(x, shoreTop + h);
+    }
+    ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+    var grad = ctx.createLinearGradient(0, shoreTop, 0, H);
+    grad.addColorStop(0, 'rgba(218,210,195,0.25)');
+    grad.addColorStop(0.3, rgba(COLORS.paper, 0.42));
+    grad.addColorStop(1, rgba(COLORS.paper, 0.65));
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.strokeStyle = 'rgba(130,110,90,0.18)'; ctx.lineWidth = 0.7; ctx.beginPath();
+    for (var x = 0; x <= W; x += 3) {
+      var h = Math.sin(x*0.0018+1.5)*10+Math.sin(x*0.0045+2.8)*7
+            +Math.sin(x*0.011+4.1)*4+Math.sin(time*0.0003+x*0.003)*3+breathe*0.12;
+      if (x === 0) ctx.moveTo(x, shoreTop+h); else ctx.lineTo(x, shoreTop+h);
+    }
+    ctx.stroke(); ctx.restore();
+    drawShoreRocks(ctx, W, H, shoreTop, time, breathe);
+
+    // ★ 岸边薄雪（极轻，仅微微点缀）
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.beginPath(); ctx.moveTo(0, shoreTop - 1);
+    for (var x = 0; x <= W; x += 4) {
+      var h = Math.sin(x*0.0018+1.5)*10+Math.sin(x*0.0045+2.8)*7
+            +Math.sin(x*0.011+4.1)*4+Math.sin(time*0.0003+x*0.003)*3+breathe*0.12;
+      var snowH = Math.max(0, (h + 5) * 0.12);
+      ctx.lineTo(x, shoreTop + h - snowH);
+    }
+    for (var x = W; x >= 0; x -= 4) {
+      var h = Math.sin(x*0.0018+1.5)*10+Math.sin(x*0.0045+2.8)*7
+            +Math.sin(x*0.011+4.1)*4+Math.sin(time*0.0003+x*0.003)*3+breathe*0.12;
+      ctx.lineTo(x, shoreTop + h);
+    }
+    ctx.closePath();
+    var snowGrad = ctx.createLinearGradient(0, shoreTop - 5, 0, shoreTop + 8);
+    snowGrad.addColorStop(0, 'rgba(252,250,246,0.8)');
+    snowGrad.addColorStop(1, 'rgba(245,242,238,0)');
+    ctx.fillStyle = snowGrad; ctx.fill();
+    ctx.restore();
+  }
+
+  function drawMountainReflection(ctx, W, H, waterTop, time, px, breathe) {
+    ctx.save();
+    for (var li = 2; li <= 3; li++) {
+      var l = MOUNTAIN_LAYERS[li];
+      ctx.globalAlpha = li === 3 ? 0.12 : 0.07;
+      ctx.beginPath(); ctx.moveTo(0, waterTop);
+      for (var x = 0; x <= W; x += 3) {
+        var h = mountainHeight(x, l, time, breathe, px * l.parallax / MOUNTAIN_LAYERS[3].parallax * 0.015);
+        var rippleY = Math.sin(x*0.018+time*0.0012)*2.5+Math.cos(x*0.031+time*0.0009)*1.8+Math.sin(x*0.008-time*0.0015)*3.0;
+        var sy = waterTop + h * 0.42 + rippleY;
+        ctx.lineTo(x, sy);
+      }
+      ctx.lineTo(W, waterTop); ctx.closePath();
+      var refGrad = ctx.createLinearGradient(0, waterTop, 0, waterTop + 90);
+      refGrad.addColorStop(0, 'rgba('+(l.topColor[0]-60)+','+(l.topColor[1]-50)+','+(l.topColor[2]-40)+',0.35)');
+      refGrad.addColorStop(0.4, 'rgba('+(l.topColor[0]-40)+','+(l.topColor[1]-35)+','+(l.topColor[2]-30)+',0.12)');
+      refGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = refGrad; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawWaterPetals(ctx, petals, W, waterTop, waterBot, time) {
+    var waterH = waterBot - waterTop;
+    var wc = WUSE_MODE ? getWuseColor() : null;
+    ctx.save();
+    for (var i = 0; i < petals.length; i++) {
+      var p = petals[i];
+      var sy = waterTop + 10 + (p.y % (waterH - 30));
+      var alpha = p.alpha * (0.7 + 0.3 * Math.sin(time * 0.002 + p.phase));
+      ctx.save(); ctx.translate(p.x, sy); ctx.rotate(p.rot); ctx.globalAlpha = alpha;
+      var r = p.size;
+      var grad = ctx.createRadialGradient(0, 0, r*0.2, 0, 0, r);
+      var petalColor = wc ? wc.petal : COLORS.peachRed;
+      var petalFade = wc ? [(petalColor[0]+10)|0,(petalColor[1]+15)|0,(petalColor[2]+15)|0] : [240,175,170];
+      grad.addColorStop(0, rgba(petalColor, 0.8));
+      grad.addColorStop(0.5, rgba(petalFade, 0.4));
+      grad.addColorStop(1, 'rgba(255,200,200,0)');
+      ctx.fillStyle = grad;
+      for (var j = 0; j < 5; j++) {
+        var angle = (j / 5) * Math.PI * 2 - Math.PI / 2;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(angle)*r*0.5, Math.sin(angle)*r*0.5, r*0.4, r*0.22, angle, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.fillStyle = rgba(wc ? wc.petal : COLORS.gilded, alpha*0.4); ctx.beginPath(); ctx.arc(0, 0, r*0.12, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // ★ 流动色带——6条半透明色带在水面上缓缓流动，形成丰富的色彩渐变
+  function drawFlowBands(ctx, W, waterTop, waterBot, time) {
+    if (!WUSE_MODE) return;
+    var wc = getWuseColor();
+    if (!wc.flowColors) return;
+    ctx.save();
+    var waterH = waterBot - waterTop;
+    var fc = wc.flowColors;
+    // 6条色带，各自以不同速度和方向漂移
+    for (var i = 0; i < fc.length; i++) {
+      var c = fc[i];
+      var speed1 = 0.00018 + i * 0.00006;
+      var speed2 = 0.00012 + i * 0.00004;
+      // 色带中心Y位置随时间缓慢漂移
+      var bandCenterY = waterTop + waterH * (0.08 + i * 0.14)
+                      + Math.sin(time * speed1 + i * 2.1) * waterH * 0.1;
+      // 色带水平偏移
+      var driftX = Math.sin(time * speed2 + i * 1.7) * W * 0.15;
+      var bandH = waterH * 0.28 + Math.sin(time * 0.0003 + i) * waterH * 0.06;
+      var pulse = 0.5 + 0.5 * Math.sin(time * 0.0005 + i * 1.3);
+      var alpha = 0.14 * pulse; // ★ 大幅提高可见度 0.06→0.14
+      // 创建倾斜渐变（左上到右下，模拟水面流动方向）
+      var x1 = driftX - W * 0.15;
+      var y1 = bandCenterY - bandH * 0.5;
+      var x2 = W + driftX + W * 0.15;
+      var y2 = bandCenterY + bandH * 0.5;
+      var grad = ctx.createLinearGradient(x1, y1, x2, y2);
+      // 渐变：透明 → 主色 → 副色 → 主色 → 透明，过渡更柔和
+      var mainC = i % 3 === 0 ? wc.waterMid : (i % 3 === 1 ? wc.waterAlt : wc.waterSurf);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(0.1, 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+','+(alpha*0.2)+')');
+      grad.addColorStop(0.25, 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+','+(alpha*0.7)+')');
+      grad.addColorStop(0.4, 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+','+alpha+')');
+      grad.addColorStop(0.55, 'rgba('+Math.round(mainC[0])+','+Math.round(mainC[1])+','+Math.round(mainC[2])+','+(alpha*0.6)+')');
+      grad.addColorStop(0.7, 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+','+alpha+')');
+      grad.addColorStop(0.85, 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+','+(alpha*0.4)+')');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      // 带波浪边缘的色带
+      ctx.beginPath();
+      ctx.moveTo(0, bandCenterY - bandH * 0.5);
+      for (var x = 0; x <= W; x += 6) {
+        var waveY = Math.sin(x * 0.008 + time * 0.0006 + i * 1.5) * bandH * 0.15
+                  + Math.sin(x * 0.015 + time * 0.0004 + i) * bandH * 0.08;
+        ctx.lineTo(x, bandCenterY - bandH * 0.5 + waveY);
+      }
+      for (var x = W; x >= 0; x -= 6) {
+        var waveY = Math.sin(x * 0.008 + time * 0.0006 + i * 1.5 + 2) * bandH * 0.15
+                  + Math.sin(x * 0.015 + time * 0.0004 + i + 1) * bandH * 0.08;
+        ctx.lineTo(x, bandCenterY + bandH * 0.5 + waveY);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ★ 彩色光点——水面散布的微小彩色光点，赤橙黄绿青蓝紫，增添色彩丰富度
+  function drawColorDots(ctx, W, waterTop, waterBot, time) {
+    if (!WUSE_MODE) return;
+    var wc = getWuseColor();
+    if (!wc.colorDots) return;
+    ctx.save();
+    var waterH = waterBot - waterTop;
+    var cd = wc.colorDots;
+    // ★ 彩虹微注——使用rainbowTint颜色，像矿物质渗入池水
+    var rt = wc.rainbowTint || cd;
+    // 60个彩色光点 + 30个彩虹微注点
+    var totalDots = 90;
+    for (var i = 0; i < totalDots; i++) {
+      var seed = i * 5.23;
+      var isRainbow = i >= 60; // 后30个是彩虹微注
+      var colorArr = isRainbow ? rt : cd;
+      var ci = i % colorArr.length;
+      var c = colorArr[ci];
+      // 位置：基于种子的伪随机分布 + 缓慢漂移
+      var baseX = (Math.sin(seed * 2.71) * 0.5 + 0.5) * W;
+      var baseY = waterTop + 15 + (Math.cos(seed * 3.14) * 0.5 + 0.5) * (waterH - 40);
+      var drift = Math.sin(time * 0.0003 + seed * 1.7) * 35;
+      var driftY = Math.cos(time * 0.00025 + seed * 2.1) * 15;
+      var dx = baseX + drift;
+      var dy = baseY + driftY;
+      // 闪烁
+      var flicker = 0.3 + 0.7 * Math.abs(Math.sin(time * 0.0015 + seed * 1.9));
+      var depthFade = 1 - (dy - waterTop) / waterH * 0.5;
+      // ★ 彩虹微注稍亮，普通光点稍暗
+      var baseAlpha = isRainbow ? 0.15 : 0.10;
+      var alpha = baseAlpha * flicker * depthFade;
+      var size = isRainbow ? (3 + flicker * 5) : (2 + flicker * 4);
+      // 光点用径向渐变
+      var grad = ctx.createRadialGradient(dx, dy, 0, dx, dy, size * 3);
+      grad.addColorStop(0, 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+','+alpha+')');
+      grad.addColorStop(0.2, 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+','+(alpha*0.6)+')');
+      grad.addColorStop(0.5, 'rgba('+Math.round(c[0]*0.85)+','+Math.round(c[1]*0.85)+','+Math.round(c[2]*0.85)+','+(alpha*0.2)+')');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(dx, dy, size * 3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ★ 彩色焦散增强——焦散使用更丰富的色彩
+  function drawCausticsEnhanced(ctx, W, waterTop, waterBot, time) {
+    var waterH = waterBot - waterTop; ctx.save();
+    var wc = WUSE_MODE ? getWuseColor() : null;
+    var cCol = wc ? wc.caustic : [200,255,235];
+    var cCol2 = wc ? [(cCol[0]*0.85)|0,(cCol[1]*0.9)|0,(cCol[2]*0.88)|0] : [175,238,218];
+    var cCol3 = wc ? [(cCol[0]*0.65)|0,(cCol[1]*0.78)|0,(cCol[2]*0.73)|0] : [130,200,188];
+    // ★ 五色副色焦散
+    var cAlt = wc ? (wc.waterAlt || wc.waterDeep) : null;
+    // ★ 彩色光点焦散：使用 colorDots 和 rainbowTint 的颜色
+    var colorDotsArr = wc ? wc.colorDots : null;
+    var rainbowArr = wc ? wc.rainbowTint : null;
+    for (var i = 0; i < 65; i++) {
+      var seed = i * 7.389;
+      var wx1 = Math.sin(time * 0.0006 + seed * 0.33) * 0.5 + 0.5;
+      var wx2 = Math.cos(time * 0.0009 + seed * 0.71) * 0.5 + 0.5;
+      var wy1 = Math.sin(time * 0.0007 + seed * 0.52) * 0.5 + 0.5;
+      var wy2 = Math.cos(time * 0.0008 + seed * 1.13) * 0.5 + 0.5;
+      var x = (wx1 * 0.6 + wx2 * 0.4) * W;
+      var y = waterTop + 18 + (wy1 * 0.55 + wy2 * 0.45) * (waterH - 40);
+      var depthFade = 1 - (y - waterTop) / waterH * 0.55;
+      var interf = Math.abs(Math.sin(time * 0.0012 + seed * 0.8 + wx1 * 6.3) + Math.cos(time * 0.0009 + seed * 1.2 + wy1 * 5.1));
+      var bright = interf * 0.5;
+      if (bright < 0.28) continue;
+      var alpha = bright * 0.16 * depthFade; // ★ 提高焦散亮度
+      var size = 3 + bright * 22;
+      // ★ 丰富色彩选择：主色/副色/colorDots/rainbowTint
+      var cc1, cc2, cc3;
+      if (rainbowArr && i % 7 === 0) {
+        // 每7个焦散使用一个rainbowTint颜色
+        var dotC = rainbowArr[i % rainbowArr.length];
+        cc1 = dotC; cc2 = [(dotC[0]*0.85)|0,(dotC[1]*0.9)|0,(dotC[2]*0.88)|0]; cc3 = [(dotC[0]*0.65)|0,(dotC[1]*0.78)|0,(dotC[2]*0.73)|0];
+      } else if (colorDotsArr && i % 4 === 1) {
+        var dotC = colorDotsArr[i % colorDotsArr.length];
+        cc1 = dotC; cc2 = [(dotC[0]*0.85)|0,(dotC[1]*0.9)|0,(dotC[2]*0.88)|0]; cc3 = [(dotC[0]*0.65)|0,(dotC[1]*0.78)|0,(dotC[2]*0.73)|0];
+      } else if (cAlt && i % 3 === 0) {
+        cc1 = cAlt; cc2 = [(cAlt[0]*0.85)|0,(cAlt[1]*0.9)|0,(cAlt[2]*0.88)|0]; cc3 = [(cAlt[0]*0.65)|0,(cAlt[1]*0.78)|0,(cAlt[2]*0.73)|0];
+      } else {
+        cc1 = cCol; cc2 = cCol2; cc3 = cCol3;
+      }
+      var glow = ctx.createRadialGradient(x, y, 0, x, y, size);
+      glow.addColorStop(0, 'rgba('+Math.round(cc1[0])+','+Math.round(cc1[1])+','+Math.round(cc1[2])+',' + alpha + ')');
+      glow.addColorStop(0.18, 'rgba('+Math.round(cc2[0])+','+Math.round(cc2[1])+','+Math.round(cc2[2])+',' + (alpha*0.7) + ')');
+      glow.addColorStop(0.5, 'rgba('+Math.round(cc3[0])+','+Math.round(cc3[1])+','+Math.round(cc3[2])+',' + (alpha*0.28) + ')');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+      if (bright > 0.48) {
+        var tLen = size * (1.5 + bright);
+        var tAng = time * 0.0003 + seed * 2.7;
+        var ex = x + Math.cos(tAng) * tLen, ey = y + Math.sin(tAng) * tLen;
+        ctx.strokeStyle = 'rgba('+Math.round(cc2[0])+','+Math.round(cc2[1])+','+Math.round(cc2[2])+',' + (alpha*0.45) + ')';
+        ctx.lineWidth = 0.8 + bright * 2; ctx.lineCap = 'round'; ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo((x+ex)/2+Math.cos(tAng+1.5)*tLen*0.3,(y+ey)/2+Math.sin(tAng+1.5)*tLen*0.3,ex,ey);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawRipples(ctx, ripples) {
+    for (var i = 0; i < ripples.length; i++) {
+      var r = ripples[i];
+      if (r.progress >= 1) continue;
+      var ease = 1 - Math.pow(1 - r.progress, 3);
+      var alpha = (1 - r.progress) * 0.45;
+      var radius = 8 + r.maxRadius * ease;
+      var lineW = 1.5 * (1 - r.progress) + 0.5;
+
+      // ★ 五色涟漪：多层同心圆，外圈更淡
+      var ringCount = r.multiRing ? 3 : 1;
+      for (var ring = 0; ring < ringCount; ring++) {
+        var ringRadius = radius - ring * (radius * 0.25);
+        if (ringRadius < 2) continue;
+        var ringAlpha = alpha * (1 - ring * 0.35);
+        var ringLineW = lineW * (1 - ring * 0.3);
+        ctx.save(); ctx.globalAlpha = ringAlpha;
+        ctx.strokeStyle = r.color; ctx.lineWidth = Math.max(0.3, ringLineW);
+        ctx.beginPath(); ctx.arc(r.x, r.y, ringRadius, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
+  function drawTrailStamps(ctx, stamps, time) {
+    for (var i = 0; i < stamps.length; i++) {
+      var s = stamps[i];
+      var life = (time - s.born) / s.lifespan; if (life >= 1) continue;
+      var alpha = (1 - life) * s.alpha, size = s.size * (1 + life * 0.5);
+      var grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, size);
+      grad.addColorStop(0, rgba(COLORS.cloudWhite, alpha));
+      grad.addColorStop(0.3, rgba([235,232,225], alpha*0.6));
+      grad.addColorStop(0.6, rgba([220,215,210], alpha*0.2));
+      grad.addColorStop(1, 'rgba(200,200,200,0)');
+      ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(s.x, s.y, size, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  function drawMistParticles(ctx, particles, W, H, time) {
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var alpha = p.alpha * (0.7 + 0.3 * Math.sin(time * p.pulse + p.phase));
+      var grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+      grad.addColorStop(0, rgba(COLORS.mistWhite, alpha));
+      grad.addColorStop(0.4, rgba(COLORS.cloudWhite, alpha*0.5));
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  function drawPeachBlossoms(ctx, particles, W, H, time) {
+    var wc = WUSE_MODE ? getWuseColor() : null;
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var alpha = p.alpha * (0.6 + 0.4 * Math.sin(time * p.pulse + p.phase));
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = alpha;
+      var r = p.size;
+      var grad = ctx.createRadialGradient(0, 0, r*0.3, 0, 0, r);
+      var petalColor = wc ? wc.petal : COLORS.peachRed;
+      var petalFade = wc ? [(petalColor[0]+40)|0,(petalColor[1]+20)|0,(petalColor[2]+20)|0] : [240,180,175];
+      grad.addColorStop(0, rgba(petalColor, 0.9));
+      grad.addColorStop(0.4, rgba(petalColor, 0.6));
+      grad.addColorStop(0.7, rgba(petalFade, 0.3));
+      grad.addColorStop(1, 'rgba(255,200,200,0)');
+      ctx.fillStyle = grad;
+      for (var j = 0; j < 5; j++) {
+        var angle = (j / 5) * Math.PI * 2 - Math.PI / 2;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(angle)*r*0.5, Math.sin(angle)*r*0.5, r*0.45, r*0.25, angle, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.fillStyle = rgba(wc ? wc.petal : COLORS.gilded, alpha*0.5); ctx.beginPath(); ctx.arc(0, 0, r*0.3, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // ★ 雪景绘制
+  function drawSnow(ctx, particles, W, H, time) {
+    ctx.save();
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var flicker = 0.7 + 0.3 * Math.sin(time * p.pulse + p.phase);
+      var alpha = p.alpha * flicker;
+      // 大雪花用椭圆+光晕，小雪花用圆点
+      if (p.size > 2.5) {
+        // 大雪花：六角形光晕
+        var r = p.size;
+        var grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2.2);
+        grad.addColorStop(0, 'rgba(255,252,248,' + alpha + ')');
+        grad.addColorStop(0.3, 'rgba(245,242,238,' + (alpha * 0.6) + ')');
+        grad.addColorStop(0.6, 'rgba(235,232,228,' + (alpha * 0.2) + ')');
+        grad.addColorStop(1, 'rgba(225,222,218,0)');
+        ctx.fillStyle = grad;
+        ctx.save(); ctx.translate(p.x, p.y);
+        ctx.beginPath();
+        // 六角形轮廓
+        for (var j = 0; j < 6; j++) {
+          var angle = (j / 6) * Math.PI * 2 - Math.PI / 2;
+          var armLen = r * (0.8 + 0.2 * Math.sin(time * 0.001 + j + p.phase));
+          var ex = Math.cos(angle) * armLen, ey = Math.sin(angle) * armLen;
+          if (j === 0) ctx.moveTo(ex, ey);
+          else ctx.lineTo(ex, ey);
+          // 分支
+          var bx = Math.cos(angle + 0.5) * armLen * 0.4;
+          var by = Math.sin(angle + 0.5) * armLen * 0.4;
+          ctx.lineTo(bx, by);
+          ctx.lineTo(Math.cos(angle) * armLen * 0.55, Math.sin(angle) * armLen * 0.55);
+          var bx2 = Math.cos(angle - 0.5) * armLen * 0.4;
+          var by2 = Math.sin(angle - 0.5) * armLen * 0.4;
+          ctx.lineTo(bx2, by2);
+          ctx.lineTo(ex, ey);
+        }
+        ctx.closePath(); ctx.fill();
+        // 中心光点
+        ctx.fillStyle = 'rgba(255,255,252,' + (alpha * 0.8) + ')';
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.25, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      } else {
+        // 小雪花：柔和圆点
+        var grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+        grad.addColorStop(0, 'rgba(255,252,248,' + alpha + ')');
+        grad.addColorStop(0.4, 'rgba(248,245,240,' + (alpha * 0.5) + ')');
+        grad.addColorStop(1, 'rgba(240,238,235,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // ★ 山顶积雪效果
+  function drawSnowCaps(ctx, W, H, time, px, breathe) {
+    ctx.save();
+    // 只在中景和近景山峦顶部添加积雪
+    for (var li = 2; li <= 3; li++) {
+      var layer = MOUNTAIN_LAYERS[li];
+      var baseY = layer.baseYRatio * H;
+      var parallax = px * layer.parallax;
+      // 画积雪带（山脊线附近极薄一层）
+      ctx.globalAlpha = li === 3 ? 0.07 : 0.04;
+      ctx.beginPath();
+      var started = false;
+      for (var x = 0; x <= W; x += 3) {
+        var h = mountainHeight(x, layer, time, breathe, parallax);
+        var peakY = baseY - h;
+        // 只在山脊高处画积雪（用正弦判定山顶区域）
+        var snowDepth = Math.max(0, h - layer.amplitudes[0] * 0.3) * 0.15;
+        var snowY = peakY + snowDepth;
+        if (!started) { ctx.moveTo(x, snowY); started = true; }
+        else ctx.lineTo(x, snowY);
+      }
+      // 回到山脊线
+      for (var x = W; x >= 0; x -= 3) {
+        var h = mountainHeight(x, layer, time, breathe, parallax);
+        ctx.lineTo(x, baseY - h);
+      }
+      ctx.closePath();
+      var snowGrad = ctx.createLinearGradient(0, baseY - layer.amplitudes[0] * 1.3, 0, baseY - layer.amplitudes[0] * 0.5);
+      snowGrad.addColorStop(0, 'rgba(248,246,242,0.9)');
+      snowGrad.addColorStop(0.5, 'rgba(240,238,232,0.5)');
+      snowGrad.addColorStop(1, 'rgba(235,232,225,0)');
+      ctx.fillStyle = snowGrad;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  初始化
+  // ═══════════════════════════════════════════════════════════
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+
+  var W = 0, H = 0, dpr = 1;
+  var noiseImageData = null;
+  var mistParticles = [], peachParticles = [], waterPetals = [], snowParticles = [];
+  var ripples = [], trailStamps = [];
+  var mouseX = 0, mouseY = 0, mousePrevX = 0, mousePrevY = 0;
+  var _lastStamp = 0, _smoothX = 0, _lastAmb = 0;
+
+  function initParticles() {
+    mistParticles = [];
+    for (var i = 0; i < 60; i++) mistParticles.push({
+      x: Math.random()*W, y: Math.random()*H, size: 8+Math.random()*28,
+      alpha: 0.03+Math.random()*0.07, speedX: (Math.random()-0.5)*0.08,
+      speedY: -0.04-Math.random()*0.12, phase: Math.random()*Math.PI*2, pulse: 0.002+Math.random()*0.004,
+    });
+    peachParticles = [];
+    for (var i = 0; i < 45; i++) peachParticles.push({
+      x: Math.random()*W, y: Math.random()*H*0.65, size: 2.5+Math.random()*5.5,
+      alpha: 0.3+Math.random()*0.45, speedX: (Math.random()-0.5)*0.2,
+      speedY: -0.15-Math.random()*0.3, phase: Math.random()*Math.PI*2,
+      pulse: 0.004+Math.random()*0.008, rot: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.01,
+    });
+    waterPetals = [];
+    for (var i = 0; i < 20; i++) waterPetals.push({
+      x: Math.random()*W, y: Math.random()*100, size: 3+Math.random()*4,
+      alpha: 0.35+Math.random()*0.4, driftX: (Math.random()-0.5)*0.08,
+      driftY: 0.02+Math.random()*0.04, rot: Math.random()*Math.PI*2,
+      rotSpeed: (Math.random()-0.5)*0.005, phase: Math.random()*Math.PI*2,
+    });
+    // ★ 雪景粒子（轻盈少量，不抢色彩）
+    snowParticles = [];
+    for (var i = 0; i < 35; i++) snowParticles.push({
+      x: Math.random()*W, y: Math.random()*H, size: 1+Math.random()*2.5,
+      alpha: 0.15+Math.random()*0.35, speedX: (Math.random()-0.5)*0.25,
+      speedY: 0.4+Math.random()*0.6, phase: Math.random()*Math.PI*2,
+      pulse: 0.002+Math.random()*0.004, wobble: 0.3+Math.random()*0.5,
+      wobbleSpeed: 0.001+Math.random()*0.003,
+    });
+  }
+
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    W = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+    H = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    noiseImageData = generateNoiseTexture(canvas);
+    initParticles();
+    mouseX = W / 2; mouseY = H / 2;
+    mousePrevX = W / 2; mousePrevY = W / 2;
+    _smoothX = W / 2;
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 鼠标事件
+  canvas.addEventListener('mousemove', function(e) {
+    mousePrevX = mouseX; mousePrevY = mouseY;
+    mouseX = e.clientX; mouseY = e.clientY;
+    var dx = mouseX - mousePrevX, dy = mouseY - mousePrevY, dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist > 3) {
+      var now = performance.now();
+      if (now - _lastStamp > 28) { _lastStamp = now;
+        trailStamps.push({ x: mouseX+(Math.random()-0.5)*14, y: mouseY+(Math.random()-0.5)*12,
+          size: 14+Math.random()*22, alpha: 0.13+Math.random()*0.16, born: now, lifespan: 1100+Math.random()*600 });
+      }
+    }
+  });
+
+  // NPC 点击区域触发对话
+  var npcZone = document.getElementById('npcZone');
+  if (npcZone) {
+    npcZone.addEventListener('click', function(e) {
+      e.stopPropagation();
+      try { parent.startDialog(); } catch(ex) {}
+    });
+  }
+
+  // 点击场景任意处触发对话（水面同时产生涟漪）
+  canvas.addEventListener('click', function(e) {
+    var x = e.clientX, y = e.clientY;
+    var nearL = MOUNTAIN_LAYERS[3];
+    var breathe = Math.sin(performance.now() * 0.00035) * 16;
+    var waterTop = nearL.baseYRatio * H - breathe * nearL.breatheAmp * 0.6 + 12;
+    var waterBot = H * 0.87;
+    if (y >= waterTop && y <= waterBot) {
+      // 点击水面 → 产生涟漪
+      // ★ 五色模式：涟漪使用彩色光点色，更丰富
+      var clickColors;
+      if (WUSE_MODE) {
+        var wc = getWuseColor();
+        var cd = wc.colorDots || [wc.waterSurf, wc.waterAlt, wc.sparkle, wc.caustic, wc.glow];
+        clickColors = cd.map(function(c) { return 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+',0.65)'; });
+        clickColors.push('rgba('+Math.round(wc.waterSurf[0])+','+Math.round(wc.waterSurf[1])+','+Math.round(wc.waterSurf[2])+',0.6)');
+      } else {
+        clickColors = ['rgba(135,205,195,0.7)','rgba(115,190,180,0.65)',
+          'rgba(170,160,190,0.55)','rgba(150,180,170,0.62)',
+          'rgba(155,195,185,0.65)','rgba(125,175,165,0.68)'];
+      }
+      var count = 2 + Math.floor(Math.random() * 2);
+      for (var i = 0; i < count; i++) ripples.push({
+        x: x+(Math.random()-0.5)*18, y: y+(Math.random()-0.5)*12,
+        maxRadius: 48+Math.random()*58+i*18, progress: 0,
+        color: clickColors[Math.floor(Math.random()*clickColors.length)], born: performance.now(),
+        multiRing: WUSE_MODE,
+      });
+    }
+    // 无论点击哪里都触发NPC对话
+    try { parent.startDialog(); } catch(ex) {}
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  //  动画循环
+  // ═══════════════════════════════════════════════════════════
+  var _sceneInited = false;
+  function animate(timestamp) {
+    // 懒初始化：首次有尺寸时才真正开始渲染
+    if(W < 2 || H < 2){
+      if(window.innerWidth > 0 && window.innerHeight > 0) resize();
+      requestAnimationFrame(animate); return;
+    }
+    if(!_sceneInited){ _sceneInited = true; }
+    // ★ 音乐律动衰减
+    _musicBeat *= 0.92;
+    if (_musicBeat < 0.01) _musicBeat = 0;
+    var bp = _musicBeat;
+
+    var targetX = mouseX;
+    _smoothX = lerp(_smoothX || targetX, targetX, 0.08);
+    var px = (_smoothX - W / 2) * 0.5;
+    // 山体呼吸：极微小值，仅给云雾/粒子一丝微动
+    var breathe = Math.sin(timestamp * 0.00035) * 1.5;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // ★ 五色过渡动画
+    if (WUSE_MODE && WUSE_TRANSITION < 1 && WUSE_TARGET !== WUSE_IDX) {
+      WUSE_TRANSITION += 0.025;
+      if (WUSE_TRANSITION >= 1) {
+        WUSE_IDX = WUSE_TARGET;
+        WUSE_TRANSITION = 0;
+      }
+    }
+
+    // 1. 背景
+    drawNoiseBackground(ctx, noiseImageData, W, H);
+
+    // ★ 1.1 五色模式天空氛围（skyTop→skyBot 渐变）
+    if (WUSE_MODE) {
+      var wc = getWuseColor();
+      ctx.save();
+      var skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.55);
+      skyGrad.addColorStop(0, 'rgba('+Math.round(wc.skyTop[0])+','+Math.round(wc.skyTop[1])+','+Math.round(wc.skyTop[2])+',0.10)');
+      skyGrad.addColorStop(0.35, 'rgba('+Math.round(wc.skyBot[0])+','+Math.round(wc.skyBot[1])+','+Math.round(wc.skyBot[2])+',0.06)');
+      skyGrad.addColorStop(0.7, 'rgba('+Math.round(wc.glow[0])+','+Math.round(wc.glow[1])+','+Math.round(wc.glow[2])+',0.03)');
+      skyGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H * 0.55);
+      ctx.restore();
+    }
+
+    // ★ 1.5 音乐律动光晕
+    if (bp > 0.05) {
+      ctx.save();
+      var colors = [[168,216,208],[184,168,200],[126,200,192],[232,160,160],[212,168,75]];
+      var ci = Math.min(4, Math.max(0, Math.floor(_noteNorm() * 4.99)));
+      var c = colors[ci];
+      var aAlpha = bp * 0.06;
+      var cx = W * 0.5 + Math.sin(_noteNorm() * Math.PI * 2) * W * 0.12;
+      var aGrad = ctx.createRadialGradient(cx, H*0.4, 0, cx, H*0.4, W*0.35);
+      aGrad.addColorStop(0, 'rgba('+c[0]+','+c[1]+','+c[2]+','+aAlpha+')');
+      aGrad.addColorStop(0.5, 'rgba('+c[0]+','+c[1]+','+c[2]+','+(aAlpha*0.3)+')');
+      aGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = aGrad; ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+
+    // 2. 远景云峦
+    drawMountainLayer(ctx, MOUNTAIN_LAYERS[0], W, H, timestamp, px * MOUNTAIN_LAYERS[0].parallax, breathe, 0);
+    drawCloudBand(ctx, W, H, H * 0.33, timestamp, breathe);
+
+    // 3. 远山
+    drawMountainLayer(ctx, MOUNTAIN_LAYERS[1], W, H, timestamp, px * MOUNTAIN_LAYERS[1].parallax, breathe, 1);
+    drawCloudBand(ctx, W, H, H * 0.43, timestamp, breathe);
+
+    // 4. 中景仙山
+    drawMountainLayer(ctx, MOUNTAIN_LAYERS[2], W, H, timestamp, px * MOUNTAIN_LAYERS[2].parallax, breathe, 2);
+    drawCloudBand(ctx, W, H, H * 0.54, timestamp, breathe);
+
+    // 5. 近岸仙山
+    var nearL = MOUNTAIN_LAYERS[3];
+    drawMountainLayer(ctx, nearL, W, H, timestamp, px * nearL.parallax, breathe, 3);
+
+    // ★ 5.5 山顶积雪
+    drawSnowCaps(ctx, W, H, timestamp, px, breathe);
+
+    // 6. 瑶池
+    var waterTop = nearL.baseYRatio * H + 12;
+    drawWater(ctx, W, H, waterTop, timestamp, breathe);
+    drawMountainReflection(ctx, W, H, waterTop, timestamp, px, breathe);
+
+    // 7. 近岸
+    var waterBot = H * 0.87;
+    drawShore(ctx, W, H, waterBot, timestamp, breathe);
+
+    // 8. 水面浮花
+    drawWaterPetals(ctx, waterPetals, W, waterTop, waterBot, timestamp);
+
+    // 9. 环境涟漪（稀疏，自然感）
+    if (!_lastAmb) _lastAmb = 0;
+    var ambInterval = WUSE_MODE ? (2500 + Math.random() * 4000) : (5000 + Math.random() * 8000);
+    if (timestamp - _lastAmb > ambInterval) {
+      _lastAmb = timestamp;
+      var aTop = nearL.baseYRatio * H + 12;
+      // ★ 五色模式：涟漪颜色跟随五色配色（使用彩色光点色，更丰富）
+      var ambRippleColor;
+      if (WUSE_MODE) {
+        var wc = getWuseColor();
+        // 随机在waterSurf和colorDots中选取颜色
+        var cd = wc.colorDots || [wc.waterSurf, wc.waterAlt];
+        var pickIdx = Math.floor(Math.random() * (cd.length + 1));
+        var rc = pickIdx < cd.length ? cd[pickIdx] : wc.waterSurf;
+        ambRippleColor = 'rgba('+Math.round(rc[0])+','+Math.round(rc[1])+','+Math.round(rc[2])+',0.4)';
+      } else {
+        ambRippleColor = 'rgba(145,195,185,0.3)';
+      }
+      ripples.push({
+        x: W * 0.15 + Math.random() * W * 0.7, y: aTop + Math.random() * (H * 0.87 - aTop - 40),
+        maxRadius: 22 + Math.random() * 25, progress: 0,
+        color: ambRippleColor, born: performance.now(),
+        multiRing: WUSE_MODE,
+      });
+      // ★ 五色模式：额外彩色涟漪（使用colorDots）
+      if (WUSE_MODE && Math.random() > 0.35) {
+        var wc2 = getWuseColor();
+        var cd2 = wc2.colorDots || [wc2.waterAlt, wc2.sparkle];
+        var ec = cd2[Math.floor(Math.random() * cd2.length)];
+        ripples.push({
+          x: W * 0.1 + Math.random() * W * 0.8, y: aTop + Math.random() * (H * 0.87 - aTop - 40),
+          maxRadius: 15 + Math.random() * 20, progress: 0,
+          color: 'rgba('+Math.round(ec[0])+','+Math.round(ec[1])+','+Math.round(ec[2])+',0.35)',
+          born: performance.now(),
+          multiRing: true,
+        });
+      }
+    }
+    // ★ 音乐节拍涟漪：仅在刚收到节拍时产生一个涟漪（bp==1表示刚收到）
+    if (bp > 0.95) {
+      var bTop = nearL.baseYRatio * H + 12;
+      var beatRippleColor;
+      if (WUSE_MODE) {
+        var wc3 = getWuseColor();
+        var bc = wc3.shimmerHue || wc3.sparkle;
+        beatRippleColor = 'rgba('+Math.round(bc[0])+','+Math.round(bc[1])+','+Math.round(bc[2])+',0.45)';
+      } else {
+        beatRippleColor = 'rgba(175,238,218,0.35)';
+      }
+      ripples.push({
+        x: W * 0.2 + _noteNorm() * W * 0.6,
+        y: bTop + 20 + Math.random() * (H * 0.87 - bTop - 60),
+        maxRadius: 30 + Math.random() * 20, progress: 0,
+        color: beatRippleColor, born: performance.now(),
+        multiRing: true,
+      });
+    }
+
+    // 10. 交互涟漪
+    drawRipples(ctx, ripples);
+
+    // 11. 云絮拖尾
+    var alive = [];
+    for (var i = 0; i < trailStamps.length; i++) {
+      if (timestamp - trailStamps[i].born < trailStamps[i].lifespan) alive.push(trailStamps[i]);
+    }
+    trailStamps = alive;
+    drawTrailStamps(ctx, alive, timestamp);
+
+    // 12. 粒子
+    drawMistParticles(ctx, mistParticles, W, H, timestamp);
+    drawPeachBlossoms(ctx, peachParticles, W, H, timestamp);
+    // ★ 12.5 雪景（轻盈点缀）
+    drawSnow(ctx, snowParticles, W, H, timestamp);
+
+    // 更新粒子
+    // ★ 音乐律动：粒子速度随节拍微增
+    for (var i = 0; i < mistParticles.length; i++) {
+      var p = mistParticles[i];
+      p.x += p.speedX * (1 + bp * 0.5); p.y += p.speedY * (1 + bp * 0.3);
+      if (p.x < -p.size) p.x = W + p.size;
+      if (p.x > W + p.size) p.x = -p.size;
+      if (p.y < -p.size) { p.y = H + p.size; p.x = Math.random() * W; }
+      if (p.y > H + p.size) { p.y = -p.size; p.x = Math.random() * W; }
+    }
+    for (var i = 0; i < peachParticles.length; i++) {
+      var p = peachParticles[i];
+      p.x += p.speedX * (1 + bp * 0.4) + Math.sin(timestamp * 0.001 + p.phase) * (0.1 + bp * 0.15);
+      p.y += p.speedY * (1 + bp * 0.2); p.rot += p.rotSpeed * (1 + bp * 0.5);
+      if (p.x < -10) p.x = W + 10;
+      if (p.x > W + 10) p.x = -10;
+      if (p.y < -20) { p.y = H + 20; p.x = Math.random() * W; }
+      if (p.y > H + 20) { p.y = -20; p.x = Math.random() * W; }
+    }
+    for (var i = 0; i < waterPetals.length; i++) {
+      var p = waterPetals[i];
+      p.x += p.driftX * (1 + bp * 0.3); p.y += p.driftY * (1 + bp * 0.2); p.rot += p.rotSpeed * (1 + bp * 0.4);
+      if (p.x < -20) p.x = W + 20;
+      if (p.x > W + 20) p.x = -20;
+      if (p.y > 100) p.y = -10;
+    }
+    // ★ 雪景粒子更新
+    for (var i = 0; i < snowParticles.length; i++) {
+      var p = snowParticles[i];
+      // 横向摆动（风中飘摇感）
+      p.x += p.speedX + Math.sin(timestamp * p.wobbleSpeed + p.phase) * p.wobble;
+      p.y += p.speedY * (1 + bp * 0.15);
+      // 落出画面后重置到顶部
+      if (p.y > H + 10) { p.y = -10; p.x = Math.random() * W; }
+      if (p.x < -20) p.x = W + 20;
+      if (p.x > W + 20) p.x = -20;
+    }
+
+    // 更新涟漪
+    var actR = [];
+    for (var i = 0; i < ripples.length; i++) {
+      ripples[i].progress += 0.0042;
+      if (ripples[i].progress < 1) actR.push(ripples[i]);
+    }
+    ripples = actR;
+
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>
