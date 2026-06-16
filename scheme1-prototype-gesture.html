@@ -710,6 +710,27 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
 }
 .dialog-msg.npc-msg.visible .msg-bubble{animation:bubblePop .4s cubic-bezier(.34,1.56,.64,1) both}
 .dialog-msg.player-msg.visible .msg-bubble{animation:bubblePop .35s cubic-bezier(.34,1.56,.64,1) both}
+
+/* ===== 游戏引导教程（首次进入） ===== */
+.tutorial-overlay{position:fixed;inset:0;z-index:100000;background:rgba(10,8,6,.92);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .6s ease;backdrop-filter:blur(20px)}
+.tutorial-overlay.show{opacity:1;pointer-events:auto}
+.tutorial-inner{width:min(680px,90vw);max-height:85vh;overflow-y:auto;padding:2.5rem 3rem;background:linear-gradient(145deg,rgba(30,26,22,.98),rgba(42,36,28,.98));border:1px solid rgba(212,168,83,.25);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,220,150,.05),inset 0 1px 0 rgba(255,255,255,.06);color:#F5E6D3;font-family:'Microsoft YaHei','PingFang SC',serif;transform:translateY(30px);transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
+.tutorial-overlay.show .tutorial-inner{transform:translateY(0)}
+.tutorial-title{text-align:center;font-size:1.6rem;font-weight:700;color:#FFE8B0;letter-spacing:.2em;margin-bottom:.3rem;text-shadow:0 2px 12px rgba(212,168,83,.3)}
+.tutorial-subtitle{text-align:center;font-size:.82rem;color:#A08970;letter-spacing:.15em;margin-bottom:2rem}
+.tutorial-section{margin-bottom:1.6rem;padding:1.2rem 1.4rem;background:rgba(0,0,0,.25);border-radius:12px;border-left:3px solid rgba(212,168,83,.5)}
+.tutorial-section h4{font-size:.95rem;color:#D4A853;margin:0 0 .7rem;display:flex;align-items:center;gap:.5rem}
+.tutorial-section h4 .tut-icon{font-size:1.2rem}
+.tutorial-section p{font-size:.84rem;line-height:1.8;color:#C8B8A0;margin:.3rem 0}
+.tut-key{display:inline-block;padding:1px 7px;background:rgba(212,168,83,.18);border:1px solid rgba(212,168,83,.3);border-radius:5px;color:#E8D0A0;font-size:.78rem;font-weight:600;margin:0 2px}
+.tut-highlight{color:#FFE8B0;font-weight:600}
+.tut-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,83,.3),transparent);margin:1.5rem 0}
+.tutorial-footer{display:flex;align-items:center;justify-content:space-between;margin-top:1.8rem;padding-top:1.2rem;border-top:1px solid rgba(212,168,83,.15)}
+.tut-start-btn{padding:.75rem 2.5rem;background:linear-gradient(135deg,#B8924E,#D4A853);border:none;border-radius:999px;color:#1a1612;font-size:.95rem;font-weight:700;letter-spacing:.15em;cursor:pointer;transition:all .3s;box-shadow:0 4px 16px rgba(180,140,60,.35)}
+.tut-start-btn:hover{transform:scale(1.05);box-shadow:0 6px 24px rgba(180,140,60,.5)}
+.tut-skip-label{font-size:.76rem;color:#776655;cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:color .2s}
+.tut-skip-label:hover{color:#A08970}
+.tut-skip-label input{accent-color:#D4A853}
 </style>
 </head>
 <body>
@@ -720,6 +741,47 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
   <span style="font-size:11px;color:#FFAA77;line-height:1.8">请在终端执行：<code style="background:rgba(255,120,0,.2);padding:2px 8px;border-radius:4px;color:#FFCC88">cd /d "C:\Users\a1827\WorkBuddy\2026-05-26-task-4" && py -m http.server 8080</code>
   然后在浏览器访问 <a href="http://localhost:8080/scheme1-prototype-gesture.html" target="_blank" style="color:#FFCC44;text-decoration:underline">http://localhost:8080/scheme1-prototype-gesture.html</a></span>
   <button onclick="document.getElementById('protocolWarning').style.display='none'" style="margin-left:16px;background:rgba(255,150,50,.25);border:1px solid rgba(255,150,50,.5);color:#FFCC88;padding:4px 14px;border-radius:6px;cursor:pointer;font-size:11px">知道了 ✕</button>
+</div>
+
+<!-- 游戏引导教程（首次进入显示） -->
+<div class="tutorial-overlay" id="tutorialOverlay">
+  <div class="tutorial-inner">
+    <div class="tutorial-title">⛰️ 昆仑谣 · 灵境志</div>
+    <div class="tutorial-subtitle">— 游旅指南 —</div>
+    <div class="tutorial-section">
+      <h4><span class="tut-icon">🗺️</span> 探索地图</h4>
+      <p>在<span class="tut-highlight">地图模式</span>下，点击金色标记的地点前往探索。<br>
+        按<span class="tut-highlight">顺序</span>访问：①瑶池 → ②玉虚峰 → 后续章节…<br>
+        底部指引条会始终告诉你下一步该去哪里。</p>
+    </div>
+    <div class="tutorial-section">
+      <h4><span class="tut-icon">🏔️</span> 场景与对话</h4>
+      <p>进入场景后，与NPC对话推动剧情。每段对话会出现<span class="tut-highlight">两个选项</span>（壹 / 贰），你的选择将影响故事走向。<br>
+        对话结束后会获得关键道具，用于解锁下一站。</p>
+    </div>
+    <div class="tutorial-section">
+      <h4><span class="tut-icon">✋</span> 手势模式（推荐）</h4>
+      <p>开启摄像头后可用手势操作：<br>
+        🤚 <span class="tut-highlight">举手</span> = 前往地点／开始对话／选择选项<br>
+        ✊ <span class="tut-highlight">握拳</span> = 返回地图／确认选项／关闭卷轴<br>
+        对话中选择时：<span class="tut-highlight">手放左边选「壹」，手放右边选「贰」</span>，保持1.5秒自动确认。</p>
+    </div>
+    <div class="tutorial-section">
+      <h4><span class="tut-icon">👆</span> 触摸/点击模式</h4>
+      <p>无需摄像头，直接点击屏幕操作：<br>
+        点击地点 → 进入场景 → 点击NPC对话 → 点击选项 → 继续。<br>
+        底部指引条会实时提示当前可执行的操作。</p>
+    </div>
+    <div class="tutorial-section">
+      <h4><span class="tut-icon">📜</span> 诗词卷轴</h4>
+      <p>每完成一站对话，都会获得一首<span class="tut-highlight">古风诗词</span>。<br>
+        卷轴中可翻页欣赏，也可随时从右上角「诗词集」面板查看已收集的诗词。</p>
+    </div>
+    <div class="tutorial-footer">
+      <label class="tut-skip-label"><input type="checkbox" id="tutNoShowAgain"> 再也不显示</label>
+      <button class="tut-start-btn" onclick="_dismissTutorial()">开始旅程 ✨</button>
+    </div>
+  </div>
 </div>
 
 <!-- Welcome -->
@@ -1064,8 +1126,9 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
   </div>
   <div id="gestureGuide">
     <div class="gg-title">手势说明</div>
-    <div class="gg-item"><span class="gg-icon">👉</span><b>伸手指</b> = 下一步 / 下一个</div>
-    <div class="gg-item"><span class="gg-icon">✊</span><b>握拳</b> = 确认 / 返回</div>
+    <div class="gg-item"><span class="gg-icon">🤚</span><b>手在左边</b> = 选「壹」/ 进入场景</div>
+    <div class="gg-item"><span class="gg-icon">🤚</span><b>手在右边</b> = 选「贰」</div>
+    <div class="gg-item"><span class="gg-icon">✊</span><b>握拳</b> = 确认 / 返回地图</div>
   </div>
 </div>
 <div class="gesture-action-toast" id="gestureToast"></div>
@@ -2419,6 +2482,9 @@ function openPoemScroll(poemId){
   overlay.classList.add('show');
   overlay.classList.add('immersive');
 
+  // ★ 更新指引：卷轴模式下的手势说明
+  setGuide(gestureActive ? '🙋 举手翻页 · ✊ 握拳关闭' : '👆 点击翻页，点击 ✕ 关闭');
+
   // ★ 启动 Canvas 全屏可视化
   startPoemViz2(poem.loc, poem);
 }
@@ -2432,6 +2498,8 @@ function closePoemScroll(){
   // 重置 paper 显示
   const paper = document.querySelector('.poetry-scroll-paper');
   if(paper) paper.style.display='none';
+  // ★ 关闭卷轴后恢复指引
+  _refreshGuide();
 }
 
 function togglePoetryPanel(){
@@ -3448,11 +3516,11 @@ function _enterScene(key,npc,npcId){
       showPortrait(npc2);
     } else if(npcId2 && !isNPCDone(key)){
       // 无立绘 → 直接开对话
-      setGuide('👇 点击下方「'+NPCS[npcId2].name+'」头像，开始对话');
+      _refreshGuide(); // ★ 根据手势/触摸模式显示对应指引
       _autoDialogTimer=setTimeout(function(){ _autoDialogTimer=null; startDialog(); }, 800);
     } else {
       // 已完成过对话
-      setGuide('🗺️ 点击左上角「返回地图」继续旅程');
+      _refreshGuide(); // ★ 根据手势/触摸模式显示对应指引
     }
   });
 
@@ -3546,7 +3614,7 @@ function _updateMapGuide(){
     var num=i+1;
     var name=ROUTE_NAMES[loc];
     if(isGesture){
-      setGuide('👉 伸手指前往「'+name+'」('+num+')');
+      setGuide('🙋 举手前往「'+name+'」('+num+')');
     } else if(i===0){
       setGuide('👆 点击地图上标着 ① 的「'+name+'」开始冒险');
     } else {
@@ -3596,8 +3664,8 @@ function startDialog(){
   if(_dialogActive)return;  // 防止重复调用
   if(!currentLoc)return;
   const npcId=LOC_NPC[currentLoc];
-  if(isNPCDone(currentLoc)){showNPCText(NPCS[npcId].name,dialogData[npcId].revisited.text,true);gamePhase=GamePhase.SCENE_IDLE;return}
-  if(!checkNPCItem(currentLoc)){showNPCText(NPCS[npcId].name,dialogData[npcId].noItem.text,true);gamePhase=GamePhase.SCENE_IDLE;return}
+  if(isNPCDone(currentLoc)){showNPCText(NPCS[npcId].name,dialogData[npcId].revisited.text,true);gamePhase=GamePhase.SCENE_IDLE;_refreshGuide();return}
+  if(!checkNPCItem(currentLoc)){showNPCText(NPCS[npcId].name,dialogData[npcId].noItem.text,true);gamePhase=GamePhase.SCENE_IDLE;_refreshGuide();return}
   _dialogActive=true;
   // ★ 决定起始对话节点：姜子牙和西王母都走firstMeet
   var startNodeKey = 'firstMeet';
@@ -3605,8 +3673,10 @@ function startDialog(){
   const node=dialogData[npcId][startNodeKey];
   currentDialogNode=npcId+'.'+startNodeKey;
   gamePhase=GamePhase.DIALOG_TYPING;
+  _refreshGuide(); // ★ 切换到TYPING阶段，立即更新指引
   showNPCText(node.speaker,node.text,false,()=>{
-    showChoices(node.choices,npcId);gamePhase=GamePhase.DIALOG_CHOOSING;
+    gamePhase=GamePhase.DIALOG_CHOOSING; // ★ 先设phase，再showChoices
+    showChoices(node.choices,npcId);      // showChoices内部会调_refreshGuide()，此时phase已正确
   },node.image);
 }
 
@@ -3687,12 +3757,13 @@ function showChoices(choices,npcId){
   if(isDual)c.classList.add('dual');else c.classList.remove('dual');
   if(gestureActive){
     const hint=document.createElement('div');hint.className='dialog-gesture-hint';hint.id='dialogGestureHint';
-    hint.textContent='👉 伸手指切换选项 · ✊ 握拳确认';
+    hint.textContent='🤚 手放左边=「壹」 · 手放右边=「贰」→ 保持1.5秒自动确认';
     c.appendChild(hint);
   }
   _dialogChoiceBtns=[];
   _dialogGestureIdx=-1;_dialogGestureHold=0;
   _dlgGestureHist.length=0;_dlgLastGesture='unknown';_dlgSwitchCooldown=0;
+  _dlgLeftHold=0;_dlgRightHold=0;_dlgFistHold=0;_dlgSelectedByHand=-1;
   const dualLabels=['壹','贰'];
   choices.forEach((ch,i)=>{
     const btn=document.createElement('button');
@@ -3713,7 +3784,7 @@ function showChoices(choices,npcId){
       btn.appendChild(txt);
       if(gestureActive){
         const dir=document.createElement('span');dir.className='choice-gesture-dir';
-        dir.textContent=i===0?'←左':'右→';
+        dir.textContent=i===0?'←左边':'右边→';
         btn.appendChild(dir);
       }
     } else {
@@ -3736,7 +3807,7 @@ function showChoices(choices,npcId){
 let _dialogChoiceBtns = [];
 let _dialogGestureIdx = -1;
 let _dialogGestureHold = 0;
-const DIALOG_GESTURE_HOLD = 14; // 对话选择需14帧确认，约233ms@60fps，更快选择同时防误选
+const DIALOG_GESTURE_HOLD = 6; // 对话选择需6帧确认，约100ms@60fps（原14太高导致手势不稳定时无法触发）
 // 抗抖动：手势历史窗口
 const _gestureHistory = [];      // 最近N帧的原始手势记录
 const _HIST_LEN = 5;             // 5帧窗口，~166ms内稳定才响应
@@ -3744,8 +3815,11 @@ const _HIST_LEN = 5;             // 5帧窗口，~166ms内稳定才响应
 function selectChoice(choice,npcId){
   document.getElementById('dialogChoices').innerHTML='';
   _dialogChoiceBtns=[];_dialogGestureIdx=-1;_dialogGestureHold=0;
-  _dlgGestureHist.length=0;_dlgLastGesture='unknown';_dlgSwitchCooldown=0;_dlgLastHandX=-1;
+  _dlgGestureHist.length=0;_dlgLastGesture='unknown';_dlgSwitchCooldown=0;
+  _dlgLeftHold=0;_dlgRightHold=0;_dlgFistHold=0;_dlgSelectedByHand=-1;
+  _clearAutoConfirm(); _clearDialogBtnPreviews();
   gamePhase=GamePhase.DIALOG_TYPING;  // 选择后进入打字阶段
+  _refreshGuide(); // ★ 切换到TYPING阶段，立即更新指引
   showPlayerText(choice.text);
   console.log('[selectChoice] choice:',choice.text,'next:',choice.next,'hasAction:',!!choice.action);
   // Execute choice-level action (if any)
@@ -3778,7 +3852,7 @@ function selectChoice(choice,npcId){
           gamePhase = GamePhase.SCENE_IDLE;
           markNPCDone(currentLoc);
           const btn=document.getElementById('npcTalkBtn');btn.textContent=NPCS[npcId].name+'（再听一遍）';btn.className='npc-talk-btn quest-done';btn.onclick=()=>startDialog();
-          if(currentLoc==='yaochi'){showQuestNotif('✅ 五色石到手！');setGuide(gestureActive?'✊ 握拳返回地图 → 👉 伸手指去玉虚峰':'🗺️ 返回地图 → 点击「玉虚峰」(②) → 找姜子牙拿灵翎')}
+          if(currentLoc==='yaochi'){showQuestNotif('✅ 五色石到手！');setGuide(gestureActive?'✊ 握拳返回地图 → 🙋 举手去玉虚峰':'🗺️ 返回地图 → 点击「玉虚峰」(②) → 找姜子牙拿灵翎')}
           else if(currentLoc==='yuxu'){showQuestNotif('✅ 灵翎到手！');setGuide(gestureActive?'✊ 握拳返回地图':'🗺️ 返回地图 → 前往「不周山」(③) 找女娲补天')}
           else if(currentLoc==='buzhou'){showQuestNotif('✅ 补天完成！');setGuide(gestureActive?'✊ 握拳返回地图':'🗺️ 返回地图 → 前往「天柱」(④) 完成最终任务')}
           // ★ 下一站提示：跳过未开放地点
@@ -3794,7 +3868,8 @@ function selectChoice(choice,npcId){
             setTimeout(()=>openPoemScroll(_poemMap[currentLoc]),1200);
           }
         } else {
-          showChoices(node.choices,npcId);gamePhase=GamePhase.DIALOG_CHOOSING;
+          gamePhase=GamePhase.DIALOG_CHOOSING; // ★ 先设phase
+          showChoices(node.choices,npcId);      // 再showChoices（内部_refreshGuide能看到正确phase）
         }
       },node.image);
     },800);
@@ -3985,18 +4060,24 @@ function hideGuide(){document.getElementById('guideBar')?.classList.add('hidden'
 // 🧭 按当前状态更新指引（根据手势是否开启显示不同提示）
 function _refreshGuide(){
   var isGesture = gestureActive; // 手势是否开启
+  // ★ 诗词卷轴优先级最高（覆盖其他所有状态）
+  var _poemOv = document.getElementById('poetryScrollOverlay');
+  if(_poemOv && _poemOv.classList.contains('show')){
+    setGuide(isGesture ? '🙋 举手翻页 · ✊ 握拳关闭' : '👆 点击翻页，点击 ✕ 关闭');
+    return;
+  }
   if(gamePhase===GamePhase.DIALOG_CHOOSING){
-    setGuide(isGesture ? '👉 伸手指切换选项 → ✊ 握拳确认' : '👆 点击对话选项，选择你的回答');
+    setGuide(isGesture ? '🤚 手放左边选「壹」· 手放右边选「贰」→ 保持1.5秒自动确认' : '👆 点击对话选项，选择你的回答');
     return;
   }
   if(gamePhase===GamePhase.DIALOG_TYPING){
-    setGuide(isGesture ? '👉 伸手指跳过' : '👆 点击跳过');
+    setGuide('💬 等待对话...');
     return;
   }
   if(inScene && gamePhase===GamePhase.SCENE_IDLE){
     var npcId=LOC_NPC[currentLoc];
     if(npcId && !isNPCDone(currentLoc)){
-      setGuide(isGesture ? '👉 伸手指开始对话 | ✊ 握拳返回地图' : '👇 点击下方「'+NPCS[npcId].name+'」头像开始对话');
+      setGuide(isGesture ? '🙋 举手开始对话 | ✊ 握拳返回地图' : '👇 点击下方「'+NPCS[npcId].name+'」头像开始对话');
     } else {
       setGuide(isGesture ? '✊ 握拳返回地图' : '🗺️ 点击左上角「返回地图」继续旅程');
     }
@@ -4326,13 +4407,19 @@ function _skipCurrentTyping(){
   // 如果没有待显示的选项，说明对话文本已结束（单句结束或 revisited/noItem），切回 SCENE_IDLE
   if(gamePhase === GamePhase.DIALOG_TYPING && _dialogChoiceBtns.length === 0 && !currentDialogNode){
     gamePhase = GamePhase.SCENE_IDLE;
+    _refreshGuide(); // ★ 跳过结束后恢复指引
   }
 }
 
 function _confirmDialogChoice(idx){
   _dialogChoiceBtns.forEach(item=>{
     item.btn.classList.remove('gesture-hover', 'gesture-confirm');
+    item.btn.style.opacity = '';
+    item.btn.style.boxShadow = '';
+    item.btn.style.borderBottomWidth = '';
+    item.btn.style.borderBottomColor = '';
   });
+  _clearAutoConfirm();
   _showGestureToast('✅ 已选择');
   setTimeout(()=>{
     if(_dialogChoiceBtns[idx]){
@@ -4537,30 +4624,87 @@ function _detectHandGestures(kps){
   return null;
 }
 
-// 手势对话选择：简化为2种手势
-// 👉 指向 = 切换到下一个选项
-// ✊ 握拳 = 确认当前选项
+// ★ 对话选择手势：左右手系统 v2
+// 🤚 左手举手(张开/指向) → 选「壹」(选项0)
+// 🤚 右手举手(张开/指向) → 选「贰」(选项1)
+// ✊ 握拳(任意手) → 确认当前选中的选项
+// 注意：MediaPipe 的 Left/Right 是从摄像头视角看的（即用户自己的左手=Left）
+//       画面做了镜像，所以视觉上左右与用户自身一致
+// ★ 对话手势滑动窗口常量（降低阈值，提高响应速度）
+const _DLG_HIST_LEN = 3;          // 滑动窗口长度：3帧（~50ms@60fps，原5太长导致反应迟钝）
+const _DLG_MIN_RATIO = 0.6;       // 窗口中60%以上一致才算稳定（3帧中至少2帧相同）
+const _DLG_SWITCH_COOLDOWN = 10;   // 切换选项后冷却10帧（~167ms@60fps），防止快速来回切换
 let _dlgGestureHist = [];
 let _dlgLastGesture = 'unknown';
 let _dlgSwitchCooldown = 0;
 let _dlgLastProcessedSeq = -1;
+let _dlgLeftHold = 0;      // 左手举手 hold 计数
+let _dlgRightHold = 0;     // 右手举手 hold 计数
+let _dlgFistHold = 0;      // 握拳确认 hold 计数
+let _dlgSelectedByHand = -1; // 手势当前选中的选项 (-1=未选中)
+let _allDetectedHands = [];   // 所有检测到的手 [{kps, handedness, gesture}] 用于对话左右手选择
+let _resultSeq = 0;         // 结果序列号，防止renderLoop双帧处理同一帧数据
+let _dlgAutoConfirmTimer = null; // 自动确认定时器
 
-function _handleDialogHandGesture(kps){
+// ★ 新交互模型：手在左边→壹，手在右边→贰，保持1.5秒自动确认
+const _DLG_POS_THRESHOLD = 0.45; // 手的X坐标 < 0.45 视为左侧，> 0.55 视为右侧
+const _DLG_AUTO_CONFIRM_MS = 1500; // 保持位置1.5秒后自动确认
+
+function _handleDialogHandGesture(){
   if(_dialogChoiceBtns.length === 0){
+    // 重置所有状态
     _dialogGestureIdx = -1; _dialogGestureHold = 0;
     _dlgGestureHist.length = 0; _dlgSwitchCooldown = 0;
+    _dlgLeftHold = 0; _dlgRightHold = 0; _dlgFistHold = 0;
+    _dlgSelectedByHand = -1;
+    _clearAutoConfirm();
+    _clearDialogBtnPreviews();
     return;
   }
 
-  var rawGesture = _classifyHandGesture(kps);
-  var gesture = 'unknown';
-  if(rawGesture === 'point' || rawGesture === 'open') gesture = 'next';
-  else if(rawGesture === 'fist') gesture = 'confirm';
-
   const len = _dialogChoiceBtns.length;
 
-  // 滑动窗口
-  _dlgGestureHist.push(gesture);
+  // ★ 新逻辑：根据手在屏幕上的位置判断选左还是选右
+  // 手的平均X坐标（镜像后的坐标，即用户视角的左右）
+  // MediaPipe原始坐标中，x=0是画面左侧，但由于镜像，用户看到的左侧对应原始的右侧
+  // 实际上我们用的是镜像画面，所以直接用手的X坐标：
+  //   手在屏幕左半 → 选壹（index 0）
+  //   手在屏幕右半 → 选贰（index 1）
+  var handX = -1;          // 手的X坐标（0~1，镜像后）
+  var handDetected = false; // 是否检测到手且手势为张开/指向
+  var targetIdx = -1;     // 目标选项索引
+
+  for(var hi=0; hi<_allDetectedHands.length; hi++){
+    var hd = _allDetectedHands[hi];
+    if(hd.gesture === 'open' || hd.gesture === 'point'){
+      handDetected = true;
+      // 取手腕(landmark 0)的X坐标作为手的位置
+      // MediaPipe 坐标中 x=0 是图像左边，但画面做了镜像(scale(-1,1))
+      // 所以用户看到的左边 = 原始坐标的右边（x接近1）
+      // 镜像后用户视角：x_raw接近1 → 屏幕左边，x_raw接近0 → 屏幕右边
+      var rawX = hd.kps[0].x;
+      handX = rawX; // 保存最近的检测到的手的X坐标
+      // 镜像转换：用户看到的屏幕位置 = 1 - rawX
+      var screenX = 1 - rawX;
+
+      if(len >= 2){
+        if(screenX < _DLG_POS_THRESHOLD) targetIdx = 0;       // 屏幕左半 → 壹
+        else if(screenX > (1 - _DLG_POS_THRESHOLD)) targetIdx = 1; // 屏幕右半 → 贰
+        else targetIdx = -1; // 在中间区域，不选
+      } else if(len === 1){
+        targetIdx = 0; // 只有一个选项，任何位置都选
+      }
+      break; // 只取第一只检测到的手
+    }
+  }
+
+  // 滑动窗口稳定化
+  var displayGesture = 'unknown';
+  if(handDetected && targetIdx === 0) displayGesture = 'pos_left';
+  else if(handDetected && targetIdx === 1) displayGesture = 'pos_right';
+  else if(handDetected && targetIdx === -1) displayGesture = 'pos_middle';
+
+  _dlgGestureHist.push(displayGesture);
   if(_dlgGestureHist.length > _DLG_HIST_LEN) _dlgGestureHist.shift();
 
   var counts = {};
@@ -4573,38 +4717,83 @@ function _handleDialogHandGesture(kps){
 
   if(_dlgSwitchCooldown > 0) _dlgSwitchCooldown--;
 
-  // 👉 指向 = 切换到下一个选项
-  if(stableGesture === 'next'){
-    _dialogGestureHold++;
-    if(_dialogGestureHold >= DIALOG_GESTURE_HOLD){
-      if(_dlgSwitchCooldown <= 0){
-        _dialogGestureIdx = (_dialogGestureIdx + 1) % len;
-        _dlgSwitchCooldown = _DLG_SWITCH_COOLDOWN;
-        _updateDialogBtnVisuals();
-      }
-      _dialogGestureHold = 0;
+  // ═══ 手在左边 → 选 壹 (index 0) ═══
+  if(stableGesture === 'pos_left'){
+    _dlgLeftHold++;
+    _dlgRightHold = Math.max(0, _dlgRightHold - 2);
+    _dialogGestureIdx = 0;
+    // 进度反馈
+    var progress = Math.min(_dlgLeftHold / DIALOG_GESTURE_HOLD, 1);
+    _updateDialogBtnVisuals();
+    _updateDialogBtnProgress(progress, 0);
+    // 达到阈值 → 自动确认（不再需要握拳！）
+    if(_dlgLeftHold >= DIALOG_GESTURE_HOLD && _dlgSwitchCooldown <= 0){
+      _showGestureToast('🤚 左边 → 壹（自动确认）');
+      _confirmDialogChoice(0);
+      _dlgLeftHold = 0;
+      _dlgSwitchCooldown = _DLG_SWITCH_COOLDOWN;
     }
   }
-  // ✊ 握拳 = 确认当前选项
-  else if(stableGesture === 'confirm' && _dialogGestureIdx >= 0){
-    _dialogGestureHold++;
-    var progress = _dialogGestureHold / DIALOG_GESTURE_HOLD;
-    _dialogChoiceBtns.forEach(function(item, i){
-      var shouldConfirm = (i === _dialogGestureIdx && progress >= 0.6);
-      if(shouldConfirm !== item.btn.classList.contains('gesture-confirm')){
-        item.btn.classList.toggle('gesture-confirm', shouldConfirm);
-      }
-    });
-    if(_dialogGestureHold >= DIALOG_GESTURE_HOLD){
+  // ═══ 手在右边 → 选 贰 (index 1) ═══
+  else if(stableGesture === 'pos_right'){
+    _dlgRightHold++;
+    _dlgLeftHold = Math.max(0, _dlgLeftHold - 2);
+    _dialogGestureIdx = Math.min(1, len - 1);
+    var progress2 = Math.min(_dlgRightHold / DIALOG_GESTURE_HOLD, 1);
+    _updateDialogBtnVisuals();
+    _updateDialogBtnProgress(progress2, _dialogGestureIdx);
+    if(_dlgRightHold >= DIALOG_GESTURE_HOLD && _dlgSwitchCooldown <= 0){
+      _showGestureToast('🤚 右边 → 贰（自动确认）');
       _confirmDialogChoice(_dialogGestureIdx);
+      _dlgRightHold = 0;
+      _dlgSwitchCooldown = _DLG_SWITCH_COOLDOWN;
     }
   }
-  // 其他手势：缓慢衰减
+  // ═══ 手在中间 / 无有效手势：衰减 hold ═══
   else {
-    if(_dialogGestureHold > 0){
-      _dialogGestureHold = Math.max(0, _dialogGestureHold - 1);
+    if(_dlgLeftHold > 0) _dlgLeftHold = Math.max(0, _dlgLeftHold - 1);
+    if(_dlgRightHold > 0) _dlgRightHold = Math.max(0, _dlgRightHold - 1);
+    // 清除选中预览
+    if(_dialogGestureIdx >= 0){
+      _dialogGestureIdx = -1;
+      _updateDialogBtnVisuals();
+      _clearDialogBtnPreviews();
     }
   }
+}
+
+// ★ 清除自动确认定时器
+function _clearAutoConfirm(){
+  if(_dlgAutoConfirmTimer){ clearTimeout(_dlgAutoConfirmTimer); _dlgAutoConfirmTimer = null; }
+}
+
+// ★ 进度可视化：hold 过程中显示填充进度条（替代旧的握拳进度环）
+function _updateDialogBtnProgress(progress, targetIdx){
+  if(targetIdx < 0 || targetIdx >= _dialogChoiceBtns.length) return;
+  var btn = _dialogChoiceBtns[targetIdx].btn;
+  btn.style.transition = 'opacity .1s ease';
+
+  // 渐进式视觉：透明度 + 底部进度条
+  btn.style.opacity = String(0.7 + progress * 0.3);
+
+  // 用 border-bottom 宽度表示进度
+  var borderWidth = Math.round(progress * 4);
+  var borderColor = targetIdx === 0 ? 'var(--gold)' : 'var(--jade)';
+  btn.style.borderBottomWidth = (2 + borderWidth) + 'px';
+  btn.style.borderBottomColor = progress > 0.7 ? borderColor : '';
+  btn.style.boxShadow = progress > 0.5
+    ? '0 0 ' + Math.round(progress * 20) + 'px rgba(212,168,83,' + (progress * 0.4).toFixed(2) + ')'
+    : '';
+}
+
+// ★ 清除所有按钮的预览效果
+function _clearDialogBtnPreviews(){
+  _dialogChoiceBtns.forEach(function(item){
+    item.btn.style.opacity = '';
+    item.btn.style.boxShadow = '';
+    item.btn.style.borderBottomWidth = '';
+    item.btn.style.borderBottomColor = '';
+  });
 }
 
 // ★ 统一更新按钮hover视觉（只在状态变化时更新，避免每帧触发transition）
@@ -4649,11 +4838,11 @@ function _executeHandGestureAction(gesture){
     return;
   }
 
-  // ===== 对话打字中：指向=跳过 =====
+  // ===== 对话打字中：举手=跳过 =====
   if(gamePhase === GamePhase.DIALOG_TYPING){
     if(gesture === 'next'){
       _skipCurrentTyping();
-      _showGestureToast('👉 跳过');
+      _showGestureToast('🙋 跳过');
     }
     return;
   }
@@ -4669,7 +4858,7 @@ function _executeHandGestureAction(gesture){
     var _poemOverlayMap = document.getElementById('poetryScrollOverlay');
     if(_poemOverlayMap && _poemOverlayMap.classList.contains('show')){
       if(gesture === 'next' && PV2.waitingFlip){
-        _showGestureToast('👉 翻页');
+        _showGestureToast('🙋 翻页');
         _pv2FlipPage();
       } else if(gesture === 'confirm'){
         _showGestureToast('✊ 关闭');
@@ -4677,17 +4866,17 @@ function _executeHandGestureAction(gesture){
       }
       return;
     }
-    // 指向=前往下一站
+    // 举手=前往下一站
     if(gesture === 'next'){
       var nextKey = null;
       for(var ri=0; ri<ROUTE.length; ri++){
         if(!COMING_SOON.has(ROUTE[ri]) && !visited.has(ROUTE[ri])){ nextKey = ROUTE[ri]; break; }
       }
       if(nextKey){
-        _showGestureToast('👉 前往 ' + ROUTE_NAMES[nextKey]);
+        _showGestureToast('🙋 前往 ' + ROUTE_NAMES[nextKey]);
         openLocation(nextKey);
       } else {
-        _showGestureToast('👉 已完成全部路线');
+        _showGestureToast('🙋 已完成全部路线');
       }
     }
     // 握拳=无操作（地图上没地方返回）
@@ -4700,7 +4889,7 @@ function _executeHandGestureAction(gesture){
     var _poemOverlay = document.getElementById('poetryScrollOverlay');
     if(_poemOverlay && _poemOverlay.classList.contains('show')){
       if(gesture === 'next' && PV2.waitingFlip){
-        _showGestureToast('👉 翻页');
+        _showGestureToast('🙋 翻页');
         _pv2FlipPage();
       } else if(gesture === 'confirm'){
         _showGestureToast('✊ 关闭');
@@ -4708,12 +4897,12 @@ function _executeHandGestureAction(gesture){
       }
       return;
     }
-    // 指向=开始对话
+    // 举手=开始对话
     if(gesture === 'next'){
       if(currentLoc){
         var npcId = LOC_NPC[currentLoc];
         if(npcId){
-          _showGestureToast('👉 与 ' + NPCS[npcId].name + ' 对话');
+          _showGestureToast('🙋 与 ' + NPCS[npcId].name + ' 对话');
           setTimeout(function(){ startDialog(); }, 300);
         }
       }
@@ -4902,7 +5091,7 @@ async function toggleGesture(){
           }
         });
         hands.setOptions({
-          maxNumHands: 1,
+          maxNumHands: 2,
           modelComplexity: 0,
           minDetectionConfidence: 0.5,
           minTrackingConfidence: 0.4
@@ -4960,8 +5149,10 @@ async function toggleGesture(){
     var guide = document.getElementById('gestureGuide');
     if(guide) guide.classList.add('show');
 
-    var _pendingResults = null;  // 缓存检测结果
-    var _resultSeq = 0;         // 结果序列号，防止renderLoop双帧处理同一帧数据
+    var _pendingResults = null;  // 缓存检测结果（主手，用于骨架绘制和非对话手势）
+    var _pendingHandedness = null; // 主手的左右手标识 'Left'|'Right'
+    _allDetectedHands = [];   // ★ 已提升为全局变量（_handleDialogHandGesture需要访问）
+    _resultSeq = 0;           // ★ 已提升为全局变量
 
     hands.onResults(function(results){
       if(!gestureActive) return;
@@ -4975,11 +5166,22 @@ async function toggleGesture(){
       }
       _lastResultTime = performance.now();
       if(results.multiHandLandmarks && results.multiHandLandmarks.length > 0){
-        // 存储归一化坐标（flipHorizontal: true 已镜像）
+        // 主手（第一只）：用于骨架绘制、非对话手势
         _pendingResults = results.multiHandLandmarks[0];
-        _resultSeq++;  // 新结果到达，递增序列号
+        _pendingHandedness = (results.multiHandedness && results.multiHandedness[0]) ? results.multiHandedness[0].label : null;
+        // ★ 所有手：用于对话中的左右手选项选择
+        _allDetectedHands = [];
+        for(var hi=0; hi<results.multiHandLandmarks.length; hi++){
+          var hkps = results.multiHandLandmarks[hi];
+          var hLabel = (results.multiHandedness && results.multiHandedness[hi]) ? results.multiHandedness[hi].label : 'Unknown';
+          var hGesture = _classifyHandGesture(hkps);
+          _allDetectedHands.push({kps: hkps, handedness: hLabel, gesture: hGesture});
+        }
+        _resultSeq++;
       } else {
         _pendingResults = null;
+        _pendingHandedness = null;
+        _allDetectedHands = [];
         _resultSeq++;
       }
     });
@@ -5026,7 +5228,7 @@ async function toggleGesture(){
 
         var gesture = _classifyHandGesture(kps);
         _lastGesture = gesture;
-        var gestureLabels = {next:'👉下一步', confirm:'✊确认', open:'👉下一步', fist:'✊确认', point:'👉下一步', ok:'...', unknown:'...'};
+        var gestureLabels = {next:'👉下一步', confirm:'✊返回', open:'👉下一步', fist:'✊返回', point:'👉下一步', ok:'...', unknown:'...', pos_left:'🤚左边(壹)', pos_right:'🤚右边(贰)', pos_middle:'🤚中间...'};
         // 手势标签 - 显示稳定手势，不闪烁
         mpCtx.save();
         mpCtx.fillStyle = 'rgba(0,0,0,0.55)';
@@ -5050,7 +5252,7 @@ async function toggleGesture(){
           // ★ 帧去重：只在MediaPipe产出新结果时才处理（~30fps），renderLoop的60fps会复用旧帧
           if(_resultSeq !== _dlgLastProcessedSeq){
             _dlgLastProcessedSeq = _resultSeq;
-            _handleDialogHandGesture(kps);
+            _handleDialogHandGesture();  // ★ 左右手选择：从 _allDetectedHands 读取
           }
         } else if(gamePhase === GamePhase.MAP || gamePhase === GamePhase.SCENE_IDLE || gamePhase === GamePhase.DIALOG_TYPING){
           // 命令手势（地图导航 / 场景操作 / 跳过打字）
@@ -5190,11 +5392,42 @@ function loadScript(src){
   });
 }
 
+// ===== 游戏引导教程（首次进入） =====
+function _showTutorial(){
+  try{
+    if(localStorage.getItem('kunlun_tutorial_seen')) return;
+  }catch(e){}
+  var ov=document.getElementById('tutorialOverlay');
+  if(!ov) return;
+  setTimeout(function(){
+    ov.classList.add('show');
+    // ESC / 点击外部关闭
+    ov._escHandler=function(ev){if(ev.key==='Escape'){_dismissTutorial()}};
+    document.addEventListener('keydown',ov._escHandler);
+  }, 800); // 等页面稳定后显示
+}
+function _dismissTutorial(){
+  var ov=document.getElementById('tutorialOverlay');
+  if(!ov) return;
+  var chk=document.getElementById('tutNoShowAgain');
+  if(chk && chk.checked){
+    try{localStorage.setItem('kunlun_tutorial_seen','1');}catch(e){}
+  }
+  if(ov._escHandler){document.removeEventListener('keydown',ov._escHandler);ov._escHandler=null}
+  ov.classList.remove('show');
+  // 动画结束后可移除
+  setTimeout(function(){ov.style.display='none';},700);
+}
+
 // Show protocol warning if opened as file://
 if(location.protocol === 'file:'){
   var pw = document.getElementById('protocolWarning');
   if(pw) pw.style.display = 'block';
 }
+
+// ★ 首次进入：显示引导教程（延迟执行，等页面完全就绪）
+if(document.readyState==='complete'){_showTutorial()}
+else{window.addEventListener('load',_showTutorial)}
 
 // ===== 全局错误捕获：任何JS错误都会显示在面板上 =====
 window.addEventListener('error', function(e){
