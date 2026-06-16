@@ -423,7 +423,7 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
 .portrait-img{max-height:65vh;max-width:80vw;width:auto;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 60px rgba(212,168,83,.08);animation:portraitFloat 3s ease-in-out infinite;object-fit:contain}
 .portrait-name{font-size:1.4rem;font-weight:700;color:#FFE8B0;letter-spacing:.2em;text-shadow:0 2px 12px rgba(0,0,0,.5);margin-top:.5rem}
 .portrait-title{font-size:.78rem;color:#B8A070;letter-spacing:.15em;margin-top:-.4rem}
-.portrait-hint{margin-top:1rem;padding:.45rem 1.6rem;background:rgba(212,168,83,.12);border:1px solid rgba(212,168,83,.2);border-radius:999px;color:#D4A853;font-size:.72rem;letter-spacing:.1em;animation:hintPulse 2s ease-in-out infinite}
+.portrait-hint{margin-top:1rem;padding:.4rem 1.4rem;background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.15);border-radius:999px;color:#B8A070;font-size:.72rem;letter-spacing:.1em;opacity:.7}
 @keyframes portraitFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @keyframes hintPulse{0%,100%{opacity:.6}50%{opacity:1}}
 
@@ -1019,13 +1019,13 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
     <span class="guide-text" id="guideText">点击「瑶池」开始你的冒险 →</span>
   </div>
 
-  <!-- 👤 人物立绘展示（进入场景时弹出） -->
-  <div class="portrait-overlay" id="portraitOverlay" onclick="hidePortrait()">
+  <!-- 👤 人物立绘展示（进入场景时弹出，3秒后自动消失） -->
+  <div class="portrait-overlay" id="portraitOverlay">
     <div class="portrait-inner">
       <img class="portrait-img" id="portraitImg" src="" alt="">
       <div class="portrait-name" id="portraitName"></div>
       <div class="portrait-title" id="portraitTitle"></div>
-      <div class="portrait-hint">👆 点击任意处继续</div>
+      <div class="portrait-hint">✨ 立绘展示中，即将进入对话…</div>
     </div>
   </div>
 
@@ -4014,31 +4014,39 @@ function _refreshGuide(){
   // 地图模式：由 _updateMapGuide 处理
 }
 
-// 👤 人物立绘展示
+// 👤 人物立绘展示（自动消失模式）
 let _portraitPendingNpc=null; // 立绘消失后要触发的对话NPC
+let _portraitAutoTimer=null;  // 自动消失计时器
 function showPortrait(npc){
   if(!npc||!npc.portraitImg) return;
+  // 清理旧计时器
+  if(_portraitAutoTimer){clearTimeout(_portraitAutoTimer);_portraitAutoTimer=null}
   var ov=document.getElementById('portraitOverlay');
   var img=document.getElementById('portraitImg');
   document.getElementById('portraitName').textContent=npc.name;
   document.getElementById('portraitTitle').textContent=npc.title;
   img.src=npc.portraitImg;
   img.alt=npc.name;
-  _portraitPendingNpc=null; // 先清空
   hideGuide(); // 立绘展示时隐藏指引条
   requestAnimationFrame(function(){ov.classList.add('show')});
+  // ★ 自动3秒后消失并进入对话，不需要用户点击
+  _portraitAutoTimer=setTimeout(function(){
+    _portraitAutoTimer=null;
+    hidePortrait();
+  }, 3000);
 }
 function hidePortrait(){
   var ov=document.getElementById('portraitOverlay');
-  if(ov.classList.contains('show')){
-    ov.classList.remove('show');
-    // 如果有待触发的对话，在立绘消失后启动
-    if(_portraitPendingNpc){
-      setTimeout(function(){_portraitPendingNpc=null;startDialog()},350);
-    }
-    // 恢复指引（稍后由 startDialog 或 _refreshGuide 处理）
-    setTimeout(_refreshGuide,400);
+  if(!ov.classList.contains('show')) return;
+  // 清理自动计时器（防止手动触发时重复）
+  if(_portraitAutoTimer){clearTimeout(_portraitAutoTimer);_portraitAutoTimer=null}
+  ov.classList.remove('show');
+  // 如果有待触发的对话，在立绘消失后启动
+  if(_portraitPendingNpc){
+    setTimeout(function(){_portraitPendingNpc=null;startDialog()},350);
   }
+  // 恢复指引
+  setTimeout(_refreshGuide,400);
 }
 
 // ===================== MAP STATE =====================
