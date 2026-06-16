@@ -3660,7 +3660,44 @@ function markNPCDone(k){
 }
 
 // ===================== DIALOG =====================
+// ★ 防御性清除：移除任何残留的"跳过"按钮（防止旧缓存/扩展注入）
+function _removeSkipButtons(){
+  var dialogPanel = document.querySelector('.dialog-panel');
+  if(!dialogPanel) return;
+  var allBtns = dialogPanel.querySelectorAll('button, [class*="skip"], [class*="Skip"], [role="button"]');
+  for(var i=0;i<allBtns.length;i++){
+    var btn = allBtns[i];
+    if(btn.textContent && (btn.textContent.indexOf('跳过') !== -1 || btn.textContent.indexOf('skip') !== -1 || btn.className.indexOf('skip') !== -1)){
+      btn.remove();
+      console.log('[防御] 已移除残留跳过按钮:', btn.className || btn.tagName);
+    }
+  }
+}
+// ★ MutationObserver：持续监控对话面板，自动清除注入的跳过按钮
+(function(){
+  if(typeof MutationObserver === 'undefined') return;
+  var _skipObserver = null;
+  function _startSkipWatcher(){
+    if(_skipObserver) return;
+    var panel = document.querySelector('.dialog-panel');
+    if(!panel){ setTimeout(_startSkipWatcher, 500); return; }
+    _skipObserver = new MutationObserver(function(mutations){
+      // 延迟执行，等DOM完全插入后再清理
+      requestAnimationFrame(function(){ _removeSkipButtons(); });
+    });
+    _skipObserver.observe(panel, { childList: true, subtree: true });
+    console.log('[防御] 跳过按钮监控已启动');
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', _startSkipWatcher);
+  } else {
+    _startSkipWatcher();
+  }
+})();
+}
+
 function startDialog(){
+  _removeSkipButtons(); // ★ 对话开始时清除跳过按钮
   if(_dialogActive)return;  // 防止重复调用
   if(!currentLoc)return;
   const npcId=LOC_NPC[currentLoc];
@@ -3681,6 +3718,7 @@ function startDialog(){
 }
 
 function showNPCText(speaker,text,isEnd,onComplete,image){
+  _removeSkipButtons(); // ★ 显示NPC文本前清除跳过按钮
   const c=document.getElementById('dialogMessages');
   const el=document.createElement('div');el.className='dialog-msg npc-msg';
   const sp=document.createElement('div');sp.className='msg-speaker';sp.textContent=speaker;el.appendChild(sp);
@@ -3696,6 +3734,7 @@ function showNPCText(speaker,text,isEnd,onComplete,image){
 }
 
 function showPlayerText(text,cb){
+  _removeSkipButtons(); // ★ 显示玩家文本前清除跳过按钮
   const c=document.getElementById('dialogMessages');
   const el=document.createElement('div');el.className='dialog-msg player-msg';
   const bb=document.createElement('div');bb.className='msg-bubble';bb.textContent=text;el.appendChild(bb);
