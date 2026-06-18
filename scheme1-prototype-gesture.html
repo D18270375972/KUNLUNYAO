@@ -331,42 +331,55 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
 .msg-image{display:block;width:100%;height:auto;object-fit:cover;border-radius:calc(var(--radius) - 1px)}
 
 /* Dialog choices */
-.dialog-choices{padding:.8rem 1.2rem 1rem;flex-shrink:0;display:flex;flex-direction:column;gap:.5rem}
-/* 双选项并排布局：卡片风格 */
-.dialog-choices.dual{display:flex;flex-direction:row;gap:.75rem}
+.dialog-choices{padding:.6rem 0 0;flex-shrink:0;display:flex;flex-direction:column}
+/* 双选项：大号全宽纵向排列 */
+.dialog-choices.dual{display:flex;flex-direction:column;gap:.65rem;padding:0 1rem .8rem}
 .dialog-choices.dual .dialog-choice-btn{
-  flex:1;margin-bottom:0;
-  padding:1rem .8rem;
-  text-align:center;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;
-  min-height:88px;
-  border-radius:12px;
+  flex:none;width:100%;margin-bottom:0;
+  padding:1rem 1.3rem;
+  display:flex;align-items:center;gap:.7rem;
+  border-radius:12px;font-size:1.08rem;line-height:1.6;border-left:4px solid transparent;
 }
 .dialog-choices.dual .dialog-choice-btn .choice-label{
-  display:block;margin-bottom:2px;font-size:.82rem;padding:3px 10px;border-radius:6px}
-.dialog-choices.dual .dialog-choice-btn .choice-gesture-dir{position:static;transform:none;font-size:.58rem;margin-top:auto;opacity:.25}
+  flex-shrink:0;font-size:.85rem;font-weight:800;padding:4px 10px;border-radius:6px;letter-spacing:.12em}
+.dialog-choices.dual .dialog-choice-btn .choice-gesture-dir{
+  margin-left:auto;flex-shrink:0;font-size:.62rem;opacity:.2;position:static;transform:none}
 /* 通用按钮 */
-.dialog-choice-btn{width:100%;padding:.85rem 1.1rem;border:1px solid var(--border);border-radius:var(--radius);text-align:left;font-size:1.05rem;color:var(--ink);letter-spacing:.05em;transition:background .25s ease,border-color .25s ease,box-shadow .25s ease,padding-left .25s ease;background:#fff;margin-bottom:.5rem;position:relative;overflow:hidden}
+.dialog-choice-btn{width:100%;padding:.9rem 1.2rem;border:1px solid var(--border);border-radius:var(--radius);text-align:left;font-size:1.05rem;color:var(--ink);letter-spacing:.04em;transition:background .25s ease,border-color .25s ease,box-shadow .25s ease,padding-left .25s ease;background:#fff;margin-bottom:.5rem;position:relative;overflow:hidden}
 /* 选项标记（壹/贰） */
 .choice-label{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:4px;margin-right:.4rem;vertical-align:middle;position:relative;top:-1px}
 /* 甲选项 — 金色系 */
 .dialog-choice-btn.choice-a{border-left:3px solid var(--gold);background:linear-gradient(135deg,#fff 60%,rgba(212,168,83,.04) 100%)}
 .dialog-choice-btn.choice-a:hover{border-color:var(--gold);border-left-color:var(--gold);background:rgba(212,168,83,.08);box-shadow:0 2px 12px rgba(212,168,83,.15)}
 .dialog-choice-btn.choice-a .choice-label{background:rgba(212,168,83,.12);color:var(--gold-dark)}
-/* ★ 双模式甲选项：顶部金色条 */
-.dialog-choices.dual .dialog-choice-btn.choice-a{border-left:none;border-top:3px solid var(--gold);background:linear-gradient(180deg,#fff 70%,rgba(212,168,83,.05) 100%);border-radius:0 0 12px 12px}
+/* ★ 双模式大号甲选项：粗金边 */
+.dialog-choices.dual .dialog-choice-btn.choice-a{
+  border-left:4px solid var(--gold);
+  background:linear-gradient(135deg,#fff 85%,rgba(212,168,83,.06) 100%);
+  box-shadow:0 1px 6px rgba(180,150,80,.08);
+}
 .dialog-choices.dual .dialog-choice-btn.choice-a.gesture-hover,
-.dialog-choices.dual .dialog-choice-btn.choice-a:hover{border-color:var(--gold);border-top-color:var(--gold)}
-.dialog-choices.dual .dialog-choice-btn.choice-a.gesture-hover::before{left:0;right:0;top:0;bottom:auto;width:auto;height:3px;border-radius:0}
+.dialog-choices.dual .dialog-choice-btn.choice-a:hover{
+  border-color:var(--gold);
+  background:linear-gradient(135deg,rgba(212,168,83,.10) 0%,#fff 60%,rgba(212,168,83,.06) 100%);
+  box-shadow:0 4px 20px rgba(212,168,83,.2);
+}
 /* 乙选项 — 碧玉系 */
 .dialog-choice-btn.choice-b{border-left:3px solid var(--jade);background:linear-gradient(135deg,#fff 60%,rgba(74,140,111,.04) 100%)}
 .dialog-choice-btn.choice-b:hover{border-color:var(--jade);border-left-color:var(--jade);background:rgba(74,140,111,.08);box-shadow:0 2px 12px rgba(74,140,111,.15)}
 .dialog-choice-btn.choice-b .choice-label{background:rgba(74,140,111,.12);color:var(--jade-dark)}
-/* ★ 双模式乙选项：顶部碧玉条 */
-.dialog-choices.dual .dialog-choice-btn.choice-b{border-left:none;border-top:3px solid var(--jade);background:linear-gradient(180deg,#fff 70%,rgba(74,140,111,.05) 100%);border-radius:0 0 12px 12px}
+/* ★ 双模式大号乙选项：粗碧玉边 */
+.dialog-choices.dual .dialog-choice-btn.choice-b{
+  border-left:4px solid var(--jade);
+  background:linear-gradient(135deg,#fff 85%,rgba(74,140,111,.06) 100%);
+  box-shadow:0 1px 6px rgba(60,120,95,.08);
+}
 .dialog-choices.dual .dialog-choice-btn.choice-b.gesture-hover,
-.dialog-choices.dual .dialog-choice-btn.choice-b:hover{border-color:var(--jade);border-top-color:var(--jade)}
-.dialog-choices.dual .dialog-choice-btn.choice-b.gesture-hover::before{left:0;right:0;top:0;bottom:auto;width:auto;height:3px;border-radius:0}
+.dialog-choices.dual .dialog-choice-btn.choice-b:hover{
+  border-color:var(--jade);
+  background:linear-gradient(135deg,rgba(74,140,111,.10) 0%,#fff 60%,rgba(74,140,111,.06) 100%);
+  box-shadow:0 4px 20px rgba(74,140,111,.2);
+}
 /* 手势方向提示 */
 .choice-gesture-dir{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.6rem;letter-spacing:.08em;opacity:.35;pointer-events:none;transition:opacity .2s}
 .dialog-choice-btn.choice-a .choice-gesture-dir{color:var(--gold)}
@@ -375,25 +388,29 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
 .dialog-choice-btn.gesture-confirm .choice-gesture-dir{opacity:0}
 /* 手势悬停状态 — 甲/乙分别着色 */
 .dialog-choice-btn.choice-a.gesture-hover{border-color:var(--gold);background:rgba(212,168,83,.12);box-shadow:0 0 12px rgba(212,168,83,.25)}
-.dialog-choice-btn.choice-a.gesture-hover::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);border-radius:0 2px 2px 0}
+.dialog-choice-btn.choice-a.gesture-hover::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);border-radius:0 2px 2px 0}
 .dialog-choice-btn.choice-a.gesture-confirm{border-color:var(--gold);background:rgba(212,168,83,.2);box-shadow:0 0 16px rgba(212,168,83,.4)}
-.dialog-choice-btn.choice-a.gesture-confirm::after{content:'✓';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:16px;font-weight:700}
+.dialog-choice-btn.choice-a.gesture-confirm::after{content:'✓';position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:18px;font-weight:700}
 .dialog-choice-btn.choice-b.gesture-hover{border-color:var(--jade);background:rgba(74,140,111,.12);box-shadow:0 0 12px rgba(74,140,111,.25)}
-.dialog-choice-btn.choice-b.gesture-hover::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--jade);border-radius:0 2px 2px 0}
+.dialog-choice-btn.choice-b.gesture-hover::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--jade);border-radius:0 2px 2px 0}
 .dialog-choice-btn.choice-b.gesture-confirm{border-color:var(--jade);background:rgba(74,140,111,.2);box-shadow:0 0 16px rgba(74,140,111,.4)}
-.dialog-choice-btn.choice-b.gesture-confirm::after{content:'✓';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--jade);font-size:16px;font-weight:700}
-/* ★ 双模式手势状态覆盖：用顶部高亮条替代左侧 */
+.dialog-choice-btn.choice-b.gesture-confirm::after{content:'✓';position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--jade);font-size:18px;font-weight:700}
+/* ★ 双模式手势状态覆盖（用左边框高亮） */
 .dialog-choices.dual .dialog-choice-btn.choice-a.gesture-hover::before,
-.dialog-choices.dual .dialog-choice-btn.choice-b.gesture-hover::before{left:0;right:0;top:auto;bottom:0;width:auto;height:3px;border-radius:0 0 4px 4px}
-.dialog-choices.dual .dialog-choice-btn.choice-a.gesture-hover::before{background:var(--gold)}
-.dialog-choices.dual .dialog-choice-btn.choice-b.gesture-hover::before{background:var(--jade)}
+.dialog-choices.dual .dialog-choice-btn.choice-b.gesture-hover::before{
+  width:5px;border-radius:0 3px 3px 0;
+}
+.dialog-choices.dual .dialog-choice-btn.choice-a.gesture-confirm::after,
+.dialog-choices.dual .dialog-choice-btn.choice-b.gesture-confirm::after{
+  right:14px;font-size:20px;
+}
 /* 单选项 / 3选项保持原样 */
 .dialog-choice-btn:not(.choice-a):not(.choice-b):hover{border-color:var(--gold);background:rgba(212,168,83,.05);padding-left:1.4rem}
 .dialog-choice-btn:not(.choice-a):not(.choice-b).gesture-hover{border-color:#4FC3F7;background:rgba(79,195,247,.08);box-shadow:0 0 12px rgba(79,195,247,.2)}
 .dialog-choice-btn:not(.choice-a):not(.choice-b).gesture-hover::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#4FC3F7;border-radius:0 2px 2px 0}
 .dialog-choice-btn:not(.choice-a):not(.choice-b).gesture-confirm{border-color:#4FC3F7;background:rgba(79,195,247,.18);box-shadow:0 0 16px rgba(79,195,247,.35)}
 .dialog-choice-btn:not(.choice-a):not(.choice-b).gesture-confirm::after{content:'✓';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#4FC3F7;font-size:16px;font-weight:700}
-.dialog-gesture-hint{text-align:center;padding:.35rem 0;font-size:.6rem;color:rgba(140,130,110,.6);letter-spacing:.06em;pointer-events:none;line-height:1.5;border-top:1px dashed rgba(180,170,150,.2);margin-bottom:.3rem}
+.dialog-gesture-hint{text-align:center;padding:.5rem 0 .4rem;font-size:.62rem;color:rgba(160,145,120,.5);letter-spacing:.06em;pointer-events:none;line-height:1.6}
 
 /* ========== HUD ========== */
 .hud-top{position:fixed;top:0;left:0;right:0;z-index:100;height:52px;display:flex;justify-content:space-between;align-items:center;padding:0 1.5rem;background:rgba(26,24,20,.75);backdrop-filter:blur(12px);border-bottom:1px solid rgba(212,168,83,.15);color:var(--cream);transition:all .4s}
@@ -3782,7 +3799,7 @@ function showChoices(choices,npcId){
   if(isDual)c.classList.add('dual');else c.classList.remove('dual');
   if(gestureActive){
     const hint=document.createElement('div');hint.className='dialog-gesture-hint';hint.id='dialogGestureHint';
-    hint.textContent='🤚 左手边 → 壹  ·  右手边 → 贰  （保持约1.5秒自动确认）';
+    hint.textContent='🤚  左手边 → 壹    ·    右手边 → 贰    （保持约1.5秒自动确认）';
     c.appendChild(hint);
   }
   _dialogChoiceBtns=[];
