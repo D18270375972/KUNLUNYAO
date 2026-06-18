@@ -331,19 +331,19 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
 .msg-image{display:block;width:100%;height:auto;object-fit:cover;border-radius:calc(var(--radius) - 1px)}
 
 /* Dialog choices */
-.dialog-choices{padding:.6rem 0 0;flex-shrink:0;display:flex;flex-direction:column}
-/* 双选项：全宽纵向排列（适中尺寸） */
-.dialog-choices.dual{display:flex;flex-direction:column;gap:.45rem;padding:0 1rem .6rem}
+.dialog-choices{padding:.4rem 0 0;flex-shrink:0;display:flex;flex-direction:column;max-height:40%;overflow-y:auto}
+/* 双选项：紧凑纵向排列 */
+.dialog-choices.dual{display:flex;flex-direction:column;gap:.35rem;padding:0 .8rem .5rem;max-height:none;overflow:visible}
 .dialog-choices.dual .dialog-choice-btn{
   flex:none;width:100%;margin-bottom:0;
-  padding:.78rem 1rem;
-  display:flex;align-items:center;gap:.6rem;
-  border-radius:10px;font-size:.98rem;line-height:1.5;border-left:4px solid transparent;
+  padding:.6rem .85rem;
+  display:flex;align-items:center;gap:.5rem;
+  border-radius:8px;font-size:.9rem;line-height:1.4;border-left:3px solid transparent;
 }
 .dialog-choices.dual .dialog-choice-btn .choice-label{
-  flex-shrink:0;font-size:.78rem;font-weight:800;padding:3px 8px;border-radius:5px;letter-spacing:.12em}
+  flex-shrink:0;font-size:.72rem;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:.1em}
 .dialog-choices.dual .dialog-choice-btn .choice-gesture-dir{
-  margin-left:auto;flex-shrink:0;font-size:.6rem;opacity:.2;position:static;transform:none}
+  margin-left:auto;flex-shrink:0;font-size:.55rem;opacity:.2;position:static;transform:none}
 /* 通用按钮 */
 .dialog-choice-btn{width:100%;padding:.9rem 1.2rem;border:1px solid var(--border);border-radius:var(--radius);text-align:left;font-size:1.05rem;color:var(--ink);letter-spacing:.04em;transition:background .25s ease,border-color .25s ease,box-shadow .25s ease,padding-left .25s ease;background:#fff;margin-bottom:.5rem;position:relative;overflow:hidden}
 /* 选项标记（壹/贰） */
@@ -352,11 +352,11 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
 .dialog-choice-btn.choice-a{border-left:3px solid var(--gold);background:linear-gradient(135deg,#fff 60%,rgba(212,168,83,.04) 100%)}
 .dialog-choice-btn.choice-a:hover{border-color:var(--gold);border-left-color:var(--gold);background:rgba(212,168,83,.08);box-shadow:0 2px 12px rgba(212,168,83,.15)}
 .dialog-choice-btn.choice-a .choice-label{background:rgba(212,168,83,.12);color:var(--gold-dark)}
-/* ★ 双模式大号甲选项：粗金边 */
+/* ★ 双模式大号甲选项：金边 */
 .dialog-choices.dual .dialog-choice-btn.choice-a{
-  border-left:4px solid var(--gold);
+  border-left:3px solid var(--gold);
   background:linear-gradient(135deg,#fff 85%,rgba(212,168,83,.06) 100%);
-  box-shadow:0 1px 6px rgba(180,150,80,.08);
+  box-shadow:0 1px 4px rgba(180,150,80,.06);
 }
 .dialog-choices.dual .dialog-choice-btn.choice-a.gesture-hover,
 .dialog-choices.dual .dialog-choice-btn.choice-a:hover{
@@ -368,11 +368,11 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
 .dialog-choice-btn.choice-b{border-left:3px solid var(--jade);background:linear-gradient(135deg,#fff 60%,rgba(74,140,111,.04) 100%)}
 .dialog-choice-btn.choice-b:hover{border-color:var(--jade);border-left-color:var(--jade);background:rgba(74,140,111,.08);box-shadow:0 2px 12px rgba(74,140,111,.15)}
 .dialog-choice-btn.choice-b .choice-label{background:rgba(74,140,111,.12);color:var(--jade-dark)}
-/* ★ 双模式大号乙选项：粗碧玉边 */
+/* ★ 双模式大号乙选项：碧玉边 */
 .dialog-choices.dual .dialog-choice-btn.choice-b{
-  border-left:4px solid var(--jade);
+  border-left:3px solid var(--jade);
   background:linear-gradient(135deg,#fff 85%,rgba(74,140,111,.06) 100%);
-  box-shadow:0 1px 6px rgba(60,120,95,.08);
+  box-shadow:0 1px 4px rgba(60,120,95,.06);
 }
 .dialog-choices.dual .dialog-choice-btn.choice-b.gesture-hover,
 .dialog-choices.dual .dialog-choice-btn.choice-b:hover{
@@ -410,7 +410,7 @@ button{cursor:pointer;font-family:inherit;border:none;background:none}
 .dialog-choice-btn:not(.choice-a):not(.choice-b).gesture-hover::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#4FC3F7;border-radius:0 2px 2px 0}
 .dialog-choice-btn:not(.choice-a):not(.choice-b).gesture-confirm{border-color:#4FC3F7;background:rgba(79,195,247,.18);box-shadow:0 0 16px rgba(79,195,247,.35)}
 .dialog-choice-btn:not(.choice-a):not(.choice-b).gesture-confirm::after{content:'✓';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#4FC3F7;font-size:16px;font-weight:700}
-.dialog-gesture-hint{text-align:center;padding:.5rem 0 .4rem;font-size:.62rem;color:rgba(160,145,120,.5);letter-spacing:.06em;pointer-events:none;line-height:1.6}
+.dialog-gesture-hint{text-align:center;padding:.35rem 0 .3rem;font-size:.55rem;color:rgba(160,145,120,.45);letter-spacing:.05em;pointer-events:none;line-height:1.5}
 
 /* ========== HUD ========== */
 .hud-top{position:fixed;top:0;left:0;right:0;z-index:100;height:52px;display:flex;justify-content:space-between;align-items:center;padding:0 1.5rem;background:rgba(26,24,20,.75);backdrop-filter:blur(12px);border-bottom:1px solid rgba(212,168,83,.15);color:var(--cream);transition:all .4s}
