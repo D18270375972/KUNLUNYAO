@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>昆仑谣 · 灵境志 — 互动叙事游戏 v5.0</title>
+<!-- 关键图片预加载：NPC立绘 + 首屏对话场景 -->
+<link rel="preload" href="assets/npc-jiangziya.jpg" as="image">
+<link rel="preload" href="assets/npc-xiwangmu.jpg" as="image">
+<link rel="preload" href="assets/dialog-yuxu-intro.jpg" as="image">
+<link rel="preload" href="assets/dialog-yaochi-intro.jpg" as="image">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -3047,6 +3052,18 @@ const DIALOG_IMAGES={
   // ═══ 瑶池 · 天裂映池 ═══
   yaochiCrack:'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%23E8F0EE" width="400" height="200"/><rect fill="%23DDE8E4" width="400" height="200" opacity=".5"/><path d="M0 80 Q60 50 130 65 Q200 40 270 58 Q330 48 400 60 L400 200 L0 200Z" fill="%23A0C0B8" opacity=".15"/><path d="M0 105 Q80 75 170 88 Q260 70 340 80 Q380 74 400 82 L400 200 L0 200Z" fill="%2388B0A8" opacity=".1"/><ellipse cx="200" cy="130" rx="170" ry="28" fill="%2388C8B8" opacity=".12"/><ellipse cx="200" cy="136" rx="140" ry="20" fill="%23A0D8C8" opacity=".1"/><ellipse cx="200" cy="141" rx="110" ry="14" fill="%23B8E8D8" opacity=".08"/><path d="M195 50 L198 38 L200 46 L203 30 L205 42 L208 25 L210 40 L213 32 L215 48 L218 38" fill="none" stroke="%23C4503E" stroke-width="1.5" opacity=".5"/><path d="M197 54 L200 42 L203 52" fill="none" stroke="%23E07060" stroke-width=".8" opacity=".35"/><circle cx="205" cy="22" r="20" fill="%23C4503E" opacity=".06"/><circle cx="205" cy="22" r="10" fill="%23E07060" opacity=".04"/><path d="M100 135 Q140 130 180 132 Q220 128 260 134 Q300 130 340 136" fill="none" stroke="%2388B8A8" stroke-width=".5" opacity=".2"/><g transform="translate(320,48)"><ellipse cx="0" cy="6" rx="12" ry="16" fill="%23E8A0A0" opacity=".6"/><path d="M-2-12 Q1-18 4-14" fill="none" stroke="%234A8A6A" stroke-width="1.2" stroke-linecap="round" opacity=".5"/></g><g opacity=".4"><circle cx="80" cy="55" r="1.2" fill="%23FFF"/><circle cx="150" cy="45" r="1" fill="%23FFF"/><circle cx="300" cy="35" r="1.3" fill="%23FFF"/></g><text x="200" y="178" text-anchor="middle" fill="%237A9A90" font-size="10" font-family="serif" opacity=".5">天裂映池 · 不周山之殇</text></svg>'
 };
+
+// ===================== 图片预加载器 =====================
+(function(){
+  var allImages=[];
+  for(var k in DIALOG_IMAGES){var v=DIALOG_IMAGES[k];if(v&&v.startsWith('assets/')&&!v.startsWith('data:'))allImages.push(v)}
+  for(var n in NPCS){var p=NPCS[n].portraitImg;if(p&&p.startsWith('assets/'))allImages.push(p)}
+  var seen={};allImages=allImages.filter(function(s){if(seen[s])return false;seen[s]=true;return true});
+  setTimeout(function(){
+    allImages.forEach(function(src){var img=new Image();img.src=src});
+    console.log('[昆仑谣] 预加载 '+allImages.length+' 张图片完成');
+  },500);
+})();
 
 // ===================== DIALOG TREES =====================
 function getDialogs(){
