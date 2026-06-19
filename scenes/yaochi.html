@@ -186,11 +186,7 @@
     <p>左右滑动掌换五行 · 底部圆点亦可点选<br>金·月华  木·青墨  水·澄碧  火·烟霞  土·蜜金</p>
   </div>
 </div>
-<!-- ★ 五色指示器 -->
-<div class="wuse-indicator hidden" id="wuseIndicator">
-  <div class="wuse-ind-dots" id="wuseDots"></div>
-  <div class="wuse-label" id="wuseLabel">翠</div>
-</div>
+<!-- ★ 五色指示器（已移至主页面，iframe内隐藏） -->
 <script>
 (function(){
   // ═══════════════════════════════════════════════════════════
@@ -351,6 +347,8 @@
     WUSE_TRANSITION = 0;
     // 更新指示器
     updateWuseIndicator(idx);
+    // ★ 通知主页面颜色变化（手势系统同步）
+    try { parent.postMessage({type:'wuseColorIdx', idx: idx}, '*'); } catch(e) {}
   }
 
   function updateWuseIndicator(idx) {
@@ -378,7 +376,8 @@
     WUSE_MODE = true;
     document.getElementById('wuseDialog').classList.add('hidden');
     document.getElementById('wuseGuide').classList.remove('hidden');
-    document.getElementById('wuseIndicator').classList.remove('hidden');
+    var indEl = document.getElementById('wuseIndicator');
+    if (indEl) indEl.classList.remove('hidden');
     updateWuseIndicator(WUSE_IDX);
     // 启动古乐
     startWuseMusic();
@@ -400,10 +399,14 @@
     if (e.key >= '1' && e.key <= '5') { switchWuse(parseInt(e.key) - 1); }
   });
 
-  // 监听父窗口消息（场景切换时停止音乐）
+  // 监听父窗口消息（场景切换时停止音乐 + 五色手势切换）
   window.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'wuseEnabled' && e.data.value === false) {
       stopWuseMusic();
+    }
+    // ★ 接收主页面手势系统的颜色切换命令
+    if (e.data && e.data.type === 'wuseColorSwitch' && WUSE_MODE) {
+      switchWuse(e.data.idx);
     }
   });
 
