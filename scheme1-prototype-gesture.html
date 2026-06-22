@@ -3694,7 +3694,7 @@ function _updateMapGuide(){
     } else if(i===0){
       setGuide('👆 点击地图上标着 ① 的「'+name+'」开始冒险');
     } else {
-      setGuide('👆 下一步：点击「'+name+'」('+num+') 继续旅程 →');
+      setGuide('👆 下一步：点击「'+name+'」继续旅程 →');
     }
     return;
   }
@@ -3934,7 +3934,7 @@ function selectChoice(choice,npcId){
           gamePhase = GamePhase.SCENE_IDLE;
           markNPCDone(currentLoc);
           const btn=document.getElementById('npcTalkBtn');btn.textContent=NPCS[npcId].name+'（再听一遍）';btn.className='npc-talk-btn quest-done';btn.onclick=()=>startDialog();
-          if(currentLoc==='yaochi'){showQuestNotif('✅ 五色石到手！');setGuide(gestureActive?'✊ 握拳返回地图 → 🙋 举手去玉虚峰':'🗺️ 返回地图 → 点击「玉虚峰」(②) → 找姜子牙拿灵翎')}
+          if(currentLoc==='yaochi'){showQuestNotif('✅ 五色石到手！');setGuide(gestureActive?'✊ 握拳返回地图 → 🙋 举手去玉虚峰':'🗺️ 返回地图 → 点击「玉虚峰」 → 找姜子牙拿灵翎')}
           else if(currentLoc==='yuxu'){showQuestNotif('✅ 灵翎到手！');setGuide(gestureActive?'✊ 握拳返回地图':'🗺️ 返回地图 → 前往「不周山」(③) 找女娲补天')}
           else if(currentLoc==='buzhou'){showQuestNotif('✅ 补天完成！');setGuide(gestureActive?'✊ 握拳返回地图':'🗺️ 返回地图 → 前往「天柱」(④) 完成最终任务')}
           // ★ 下一站提示：跳过未开放地点
